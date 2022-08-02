@@ -1,16 +1,10 @@
-[workspace]
-members = [
-    "fp/fp_utils",
-    "fp/compiler",
-    "fp/vm"
-]
-
 [package]
-name = "fpig"
+name = "compiler"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-compiler = { path = "fp/compiler" }
+fp_utils = { path = "../fp_utils" }
+unicode-xid = "0.2.0"
