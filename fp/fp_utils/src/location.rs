@@ -1,7 +1,7 @@
 use core::fmt;
 use std::default;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Location {
     line: usize,
     column: usize,
@@ -26,6 +26,11 @@ impl Location {
 
     pub fn new_line(&mut self) {
         self.line += 1;
+    }
+
+    pub fn reset(&mut self) {
+        self.line = 1;
+        self.column = 1;
     }
 }
 
