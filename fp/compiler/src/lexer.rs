@@ -12,7 +12,7 @@ const PREDEFINED: &[(&str, TokenKind)] = &[
     ("while", TokenKind::While),
     ("and", TokenKind::And),
     ("or", TokenKind::Or),
-    ("fun", TokenKind::Fun),
+    ("fn", TokenKind::Fun),
     ("return", TokenKind::Return),
     ("true", TokenKind::True),
     ("false", TokenKind::False),
@@ -63,7 +63,6 @@ fn is_ident_continue(c: char) -> bool {
 pub fn tokenize(input: &str) -> impl Iterator<Item = Token> + '_ {
     let mut cursor = Cursor::new(input);
     std::iter::from_fn(move || {
-        // no None, just use TokenKind::Eof
         if cursor.is_eof() {
             return None;
         }
@@ -97,13 +96,25 @@ impl Cursor<'_> {
             '}' => TokenKind::CloseBrace,
 
             // one or two symbol tokens
-            '!' if self.first() == '\n' => TokenKind::BangEq,
+            '!' if self.first() == '=' => {
+                self.bump();
+                TokenKind::BangEq
+            }
             '!' => TokenKind::Bang,
-            '=' if self.first() == '\n' => TokenKind::EqEq,
+            '=' if self.first() == '=' => {
+                self.bump();
+                TokenKind::EqEq
+            }
             '=' => TokenKind::Eq,
-            '>' if self.first() == '\n' => TokenKind::GtE,
+            '>' if self.first() == '=' => {
+                self.bump();
+                TokenKind::GtE
+            }
             '>' => TokenKind::Gt,
-            '<' if self.first() == '\n' => TokenKind::LtE,
+            '<' if self.first() == '=' => {
+                self.bump();
+                TokenKind::LtE
+            }
             '<' => TokenKind::Lt,
 
             // identifier or prefined (e.g. let, if, else, for...)
@@ -120,13 +131,19 @@ impl Cursor<'_> {
         Token::new(token_kind, start_location)
     }
 
+    // numbers, like 123, 123.4
+    // NOTE: 01 is same as 1, but .1 or 1. should NOT be treated as number,
+    // see tests::test_literal_number for more infomation.
     fn number(&mut self, start: char) -> TokenKind {
         let mut lexeme = String::with_capacity(4);
         lexeme.push(start);
+
+        // the part of integer
         while matches!(self.first(), '0'..='9') {
             lexeme.push(self.bump());
         }
 
+        // the part of decimal
         if self.first() == '.' && matches!(self.second(), '0'..='9') {
             lexeme.push(self.bump());
 
@@ -142,20 +159,24 @@ impl Cursor<'_> {
         TokenKind::Int { value }
     }
 
+    // normal string
     fn string(&mut self) -> TokenKind {
         let mut lexeme = String::with_capacity(8);
         while !matches!(self.first(), EOF_CHAR | '"') {
             lexeme.push(self.bump());
         }
 
+        // the " is not close
         if self.first() == EOF_CHAR {
             return TokenKind::Error;
         }
 
+        // eat the close "
         self.bump();
         TokenKind::Str { value: lexeme }
     }
 
+    // custom identifier or predefined (e.g. let, if, true...)
     fn ident_or_predefined(&mut self, start: char) -> TokenKind {
         let mut lexeme = String::with_capacity(4);
         lexeme.push(start);
@@ -164,6 +185,7 @@ impl Cursor<'_> {
             lexeme.push(self.bump());
         }
 
+        // check if it is predefined
         if let Some((_, kind)) = PREDEFINED.iter().find(|&&(s, _)| s == lexeme) {
             return kind.clone();
         }
@@ -173,5 +195,133 @@ impl Cursor<'_> {
 
     fn skip_space(&mut self) {
         self.eat_while(is_whitespace);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use fp_utils::location::Location;
+
+    macro_rules! tokens {
+        ($($kind: expr),+ $(,)?) => {
+            {
+                let mut tokens = Vec::new();
+                $(
+                    tokens.push(Token::new($kind, Location::new(1, 1)));
+                ) *
+                tokens.into_iter()
+            }
+        };
+    }
+
+    fn tokenize_nonloc(input: &str) -> impl Iterator<Item = Token> + '_ {
+        let mut cursor = Cursor::new(input);
+        std::iter::from_fn(move || {
+            if cursor.is_eof() {
+                return None;
+            }
+            let mut token = cursor.advance_token();
+            token.reset_location();
+            Some(token)
+        })
+    }
+
+    #[allow(dead_code)]
+    fn print_tokens(tokens: impl Iterator<Item = Token>) {
+        for token in tokens {
+            println!("{}", token);
+        }
+    }
+
+    #[test]
+    fn test_single_chars() {
+        use TokenKind::*;
+        let input = "+-*/,.;(){}";
+        let expect = tokens![
+            Plus, Minus, Star, Slash, Comma, Dot, Semi, OpenParen, CloseParen, OpenBrace,
+            CloseBrace,
+        ];
+        assert!(tokenize_nonloc(input).eq(expect));
+    }
+
+    #[test]
+    fn test_one_or_two_chars() {
+        use TokenKind::*;
+        let input = "! != == = > >= < <=";
+        let expect = tokens![Bang, BangEq, EqEq, Eq, Gt, GtE, Lt, LtE,];
+        assert!(tokenize_nonloc(input).eq(expect));
+    }
+
+    #[test]
+    fn test_one_or_two_chars_more() {
+        use TokenKind::*;
+        let input = "=== !== =!= ==! !!= !=! =!! !!!";
+        let expect = tokens![
+            EqEq, Eq, BangEq, Eq, Eq, BangEq, EqEq, Bang, Bang, BangEq, BangEq, Bang, Eq, Bang,
+            Bang, Bang, Bang, Bang,
+        ];
+        assert!(tokenize_nonloc(input).eq(expect));
+    }
+
+    #[test]
+    fn test_literal_str() {
+        let input = "\"abc\"";
+        let expect = tokens!(TokenKind::Str {
+            value: "abc".to_string()
+        });
+        assert!(tokenize(input).eq(expect));
+    }
+
+    #[test]
+    fn test_literal_number() {
+        use TokenKind::{Dot, Float, Int};
+
+        let input = "1234567890 01 123 123.4 1. .1";
+        let expect = tokens![
+            Int { value: 1234567890 },
+            Int { value: 1 },
+            Int { value: 123 },
+            Float { value: 123.4 },
+            Int { value: 1 },
+            Dot,
+            Dot,
+            Int { value: 1 },
+        ];
+        assert!(tokenize_nonloc(input).eq(expect));
+    }
+
+    #[test]
+    fn test_literal_bool_nil() {
+        use TokenKind::{False, Nil, True};
+
+        let input = "true false nil";
+        let expect = tokens![True, False, Nil];
+        assert!(tokenize_nonloc(input).eq(expect));
+    }
+
+    #[test]
+    fn test_ident() {
+        use TokenKind::Ident;
+
+        let input = "this_is_an_identifier 自定义的标识";
+        let expect = tokens![
+            Ident {
+                name: "this_is_an_identifier".to_string()
+            },
+            Ident {
+                name: "自定义的标识".to_string()
+            },
+        ];
+        assert!(tokenize_nonloc(input).eq(expect));
+    }
+
+    #[test]
+    fn test_keywords() {
+        use TokenKind::*;
+
+        let input = "let if else for while and or fn return";
+        let expect = tokens![Let, If, Else, For, While, And, Or, Fun, Return,];
+        assert!(tokenize_nonloc(input).eq(expect));
     }
 }
