@@ -2,6 +2,7 @@ use core::fmt;
 
 use fp_utils::location::Location;
 
+#[derive(Debug, PartialEq)]
 pub struct Token {
     kind: TokenKind,
     location: Location,
@@ -9,13 +10,18 @@ pub struct Token {
 
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "token kind: {}, location: {}", self.kind, self.location)
+        write!(f, "location: {}, token kind: {}", self.location, self.kind)
     }
 }
 
 impl Token {
     pub fn new(kind: TokenKind, location: Location) -> Token {
         Token { kind, location }
+    }
+
+    #[cfg(test)]
+    pub fn reset_location(&mut self) {
+        self.location.reset();
     }
 }
 
