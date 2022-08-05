@@ -9,6 +9,7 @@ pub struct Cursor<'a> {
     location: Location,
 }
 
+// similar to lexer in rustc
 impl<'a> Cursor<'a> {
     pub fn new(input: &'a str) -> Cursor<'a> {
         Cursor {
@@ -27,6 +28,8 @@ impl<'a> Cursor<'a> {
         iter.next().unwrap_or(EOF_CHAR)
     }
 
+    // bump a char and not checked
+    // must be called after checked one of first(), second(), is_eof()
     pub fn bump(&mut self) -> char {
         let c = self.chars.next().unwrap_or(EOF_CHAR);
         if c == '\n' {
@@ -38,13 +41,14 @@ impl<'a> Cursor<'a> {
     }
 
     pub fn location(&self) -> Location {
-        self.location.clone()
+        self.location
     }
 
     pub fn is_eof(&self) -> bool {
         self.chars.as_str().is_empty()
     }
 
+    // copied from rustc
     pub fn eat_while(&mut self, mut predicate: impl FnMut(char) -> bool) {
         // It was tried making optimized version of this for eg. line comments, but
         // LLVM can inline all of this and compile it down to fast iteration over bytes.
