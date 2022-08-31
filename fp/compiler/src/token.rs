@@ -1,4 +1,5 @@
 use core::fmt;
+use std::default;
 
 use fp_utils::location::Location;
 
@@ -19,9 +20,27 @@ impl Token {
         Token { kind, location }
     }
 
+    pub fn kind(&self) -> &TokenKind {
+        &self.kind
+    }
+
+    pub fn location(&self) -> &Location {
+        &self.location
+    }
+
     #[cfg(test)]
     pub fn reset_location(&mut self) {
         self.location.reset();
+    }
+}
+
+// must drop!!! just used for placehold.
+impl default::Default for Token {
+    fn default() -> Self {
+        Token {
+            kind: TokenKind::Eof,
+            location: Default::default(),
+        }
     }
 }
 
@@ -61,6 +80,7 @@ pub enum TokenKind {
 
     // other
     Error,
+    Eof,
 }
 
 impl fmt::Display for TokenKind {
@@ -104,6 +124,7 @@ impl fmt::Display for TokenKind {
             Fun => write!(f, "fn"),
             Return => write!(f, "return"),
             Error => write!(f, "error"),
+            Eof => write!(f, "eof"),
         }
     }
 }

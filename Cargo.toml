@@ -4,6 +4,7 @@ members = [
     "fp/compiler",
     "fp/vm"
 ]
+exclude = ["fp/fp_debug"]
 
 [package]
 name = "fpig"

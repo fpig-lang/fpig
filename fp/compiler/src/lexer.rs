@@ -73,7 +73,7 @@ pub fn tokenize(input: &str) -> impl Iterator<Item = Token> + '_ {
 impl Cursor<'_> {
     // not check the EOF. checking EOF will make this function return Option<Token>
     // or add and EOF in TokenKind. just check EOF before call this function.
-    fn advance_token(&mut self) -> Token {
+    pub fn advance_token(&mut self) -> Token {
         // space in this language have no meaning, just skip it.
         self.skip_space();
 
