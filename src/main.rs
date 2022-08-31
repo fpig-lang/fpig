@@ -7,5 +7,5 @@ fn main() {
     io::stdin().read_line(&mut input).unwrap();
     let cursor = Cursor::new(&input);
     let mut parser = Parser::new(cursor);
-    println!("{:?}", parser.parse());
+    println!("{:#?}", parser.parse());
 }
