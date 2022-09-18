@@ -1,0 +1,16 @@
+pub enum OpCode {
+    Add = 0x00,
+    Sub = 0x01,
+    Neg = 0x02,
+    Mult = 0x03,
+    Div = 0x04,
+    True = 0x05,
+    False = 0x06,
+    Nil = 0x07,
+    Not = 0x08,
+    Eq = 0x09,
+    Gt = 0x0A,
+    Lt = 0x0B,
+    Return = 0x0C,
+    Constant = 0x0D,
+}
