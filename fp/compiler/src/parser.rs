@@ -63,7 +63,7 @@ impl Parser<'_> {
     }
 
     fn expr_equal(&mut self) -> Box<Expr> {
-        let mut left = self.expr_comparsion();
+        let mut left = self.expr_comparison();
 
         use TokenKind::*;
         while self.check(&[EqEq, BangEq]) {
@@ -72,14 +72,14 @@ impl Parser<'_> {
                 BangEq => Binaryop::NotEq,
                 _ => panic!(),
             };
-            let right = self.expr_comparsion();
+            let right = self.expr_comparison();
             left = Box::new(Expr::Binary { left, op, right });
         }
 
         left
     }
 
-    fn expr_comparsion(&mut self) -> Box<Expr> {
+    fn expr_comparison(&mut self) -> Box<Expr> {
         let mut left = self.term();
 
         use TokenKind::*;

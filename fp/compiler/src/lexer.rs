@@ -117,7 +117,7 @@ impl Cursor<'_> {
             }
             '<' => TokenKind::Lt,
 
-            // identifier or prefined (e.g. let, if, else, for...)
+            // identifier or predefined (e.g. let, if, else, for...)
             c if is_ident_start(c) => self.ident_or_predefined(c),
 
             // string
@@ -133,7 +133,7 @@ impl Cursor<'_> {
 
     // numbers, like 123, 123.4
     // NOTE: 01 is same as 1, but .1 or 1. should NOT be treated as number,
-    // see tests::test_literal_number for more infomation.
+    // see tests::test_literal_number for more information.
     fn number(&mut self, start: char) -> TokenKind {
         let mut lexeme = String::with_capacity(4);
         lexeme.push(start);
