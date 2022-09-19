@@ -1,6 +1,6 @@
 // this file is on dev, only use panic() instead error handler!
 
-use fp_utils::objects::FpObjects;
+use crate::ast::ParseObj;
 
 use crate::{
     ast::{Binaryop, Expr, Unaryop},
@@ -152,25 +152,25 @@ impl Parser<'_> {
 
         let expr = match self.peek().kind() {
             True => Box::new(Expr::Literal {
-                value: FpObjects::Bool(true),
+                value: ParseObj::Bool(true),
             }),
             False => Box::new(Expr::Literal {
-                value: FpObjects::Bool(false),
+                value: ParseObj::Bool(false),
             }),
             Nil => Box::new(Expr::Literal {
-                value: FpObjects::Nil,
+                value: ParseObj::Nil,
             }),
             Int { value } => Box::new(Expr::Literal {
-                value: FpObjects::Int(*value),
+                value: ParseObj::Int(*value),
             }),
             Float { value } => Box::new(Expr::Literal {
-                value: FpObjects::Float(*value),
+                value: ParseObj::Float(*value),
             }),
             Str { value } => Box::new(Expr::Literal {
-                value: FpObjects::Str(value.clone()),
+                value: ParseObj::Str(value.clone()),
             }),
             Ident { name } => Box::new(Expr::Literal {
-                value: FpObjects::Ident(name.clone()),
+                value: ParseObj::Ident(name.clone()),
             }),
             OpenParen => {
                 self.eat();
