@@ -1,9 +1,19 @@
-use fp_utils::objects::FpObjects;
+use core::f64;
+
+#[derive(Debug)]
+pub enum ParseObj {
+    Nil,
+    Bool(bool),
+    Int(i32),
+    Float(f64),
+    Str(String),
+    Ident(String),
+}
 
 #[derive(Debug)]
 pub enum Expr {
     Literal {
-        value: FpObjects,
+        value: ParseObj,
     },
     Group {
         body: Box<Expr>,
