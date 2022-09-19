@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-pub enum Objects {
+pub enum Value {
     Nil,
     Number(FpNumber),
     Str(FpStr),
@@ -16,5 +16,5 @@ pub struct FpStr {
 }
 
 pub struct FpList {
-    value: Vec<Objects>,
+    value: Vec<Value>,
 }
