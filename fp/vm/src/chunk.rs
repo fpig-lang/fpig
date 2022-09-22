@@ -24,11 +24,11 @@ impl Chunk {
         Some(&self.code[start..end])
     }
 
-    pub fn get_constant(&self, i: usize) -> Option<&Value> {
+    pub fn get_constant(&self, i: usize) -> Option<Value> {
         if i >= self.constants.len() {
             return None;
         }
-        Some(&self.constants[i])
+        Some(self.constants[i])
     }
 
     pub fn get_location(&self, i: usize) -> Option<&Location> {
@@ -40,5 +40,20 @@ impl Chunk {
         }
 
         None
+    }
+
+    pub fn write_code(&mut self, code: u8) {
+        self.code.push(code);
+    }
+
+    pub fn write_constant(&mut self, constant: Value) -> usize {
+        self.constants.push(constant);
+        self.constants.len() - 1
+    }
+
+    pub fn write_location(&mut self, location: Location) {
+        if let Some(l) = &mut self.locations {
+            l.push(location);
+        }
     }
 }
