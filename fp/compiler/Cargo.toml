@@ -6,5 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-fp_utils = { path = "../fp_utils" }
+utils = { path = "../utils" }
+vm = { path = "../vm" }
 unicode-xid = "0.2.0"

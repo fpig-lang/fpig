@@ -201,7 +201,7 @@ impl Cursor<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use fp_utils::location::Location;
+    use utils::location::Location;
 
     macro_rules! tokens {
         ($($kind: expr),+ $(,)?) => {

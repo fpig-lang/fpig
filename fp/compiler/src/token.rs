@@ -1,7 +1,7 @@
 use core::fmt;
 use std::default;
 
-use fp_utils::location::Location;
+use utils::location::Location;
 
 #[derive(Debug, PartialEq)]
 pub struct Token {

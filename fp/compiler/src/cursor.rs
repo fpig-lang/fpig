@@ -1,6 +1,6 @@
 use std::str::Chars;
 
-use fp_utils::location::Location;
+use utils::location::Location;
 
 pub const EOF_CHAR: char = '\0';
 

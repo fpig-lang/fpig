@@ -1,4 +1,4 @@
-use fp_utils::location::Location;
+use utils::location::Location;
 
 use crate::value::Value;
 

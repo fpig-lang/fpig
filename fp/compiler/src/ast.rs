@@ -1,5 +1,7 @@
 use core::f64;
 
+use utils::location::Location;
+
 #[derive(Debug)]
 pub enum ParseObj {
     Nil,
@@ -11,7 +13,19 @@ pub enum ParseObj {
 }
 
 #[derive(Debug)]
-pub enum Expr {
+pub struct Located<T> {
+    node: T,
+    location: Location,
+}
+
+impl<T> Located<T> {
+    pub fn new(node: T, location: Location) -> Self {
+        Located { node, location }
+    }
+}
+
+#[derive(Debug)]
+pub enum ExprKind {
     Literal {
         value: ParseObj,
     },
@@ -28,6 +42,8 @@ pub enum Expr {
         right: Box<Expr>,
     },
 }
+
+pub type Expr = Located<ExprKind>;
 
 #[derive(Debug)]
 pub enum Unaryop {
