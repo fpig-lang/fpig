@@ -5,15 +5,20 @@ use crate::value::Value;
 pub struct Chunk {
     code: Vec<u8>,
     constants: Vec<Value>,
-    locations: Option<Vec<Location>>,
+    locations: Vec<Location>,
 }
 
 impl Chunk {
-    pub fn get_byte(&self, i: usize) -> Option<u8> {
-        if i >= self.code.len() {
-            return None;
+    pub fn new() -> Self {
+        Chunk {
+            code: Vec::with_capacity(8),
+            constants: Vec::with_capacity(8),
+            locations: Vec::new(),
         }
-        Some(self.code[i])
+    }
+
+    pub fn get_byte(&self, i: usize) -> Option<u8> {
+        self.code.get(i).copied()
     }
 
     pub fn get_bytes(&self, start: usize, end: usize) -> Option<&[u8]> {
@@ -25,35 +30,23 @@ impl Chunk {
     }
 
     pub fn get_constant(&self, i: usize) -> Option<Value> {
-        if i >= self.constants.len() {
-            return None;
-        }
-        Some(self.constants[i])
+        self.constants.get(i).copied()
     }
 
     pub fn get_location(&self, i: usize) -> Option<&Location> {
-        if let Some(l) = &self.locations {
-            if i >= l.len() {
-                return None;
-            }
-            return Some(&l[i]);
-        }
-
-        None
+        self.locations.get(i)
     }
 
     pub fn write_code(&mut self, code: u8) {
         self.code.push(code);
     }
 
-    pub fn write_constant(&mut self, constant: Value) -> usize {
-        self.constants.push(constant);
+    pub fn write_constant(&mut self, v: Value) -> usize {
+        self.constants.push(v);
         self.constants.len() - 1
     }
 
-    pub fn write_location(&mut self, location: Location) {
-        if let Some(l) = &mut self.locations {
-            l.push(location);
-        }
+    pub fn write_location(&mut self, l: Location) {
+        self.locations.push(l)
     }
 }
