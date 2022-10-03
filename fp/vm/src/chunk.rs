@@ -29,8 +29,8 @@ impl Chunk {
         Some(&self.code[start..end])
     }
 
-    pub fn get_constant(&self, i: usize) -> Option<Value> {
-        self.constants.get(i).copied()
+    pub fn get_constant(&self, i: usize) -> Option<&Value> {
+        self.constants.get(i)
     }
 
     pub fn get_location(&self, i: usize) -> Option<&Location> {

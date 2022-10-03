@@ -1,7 +1,7 @@
 use core::fmt;
 use std::default;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Location {
     line: usize,
     column: usize,

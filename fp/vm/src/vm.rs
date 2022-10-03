@@ -22,6 +22,7 @@ impl Vm {
         self.run()
     }
 
+    #[allow(unused)]
     fn run(&mut self) -> IntResult {
         loop {
             let byte = self.read_byte().ok_or(())?;
@@ -31,30 +32,30 @@ impl Vm {
                 0x00 => {
                     let b = self.get_val()?;
                     let a = self.get_val()?;
-                    let result = a + b;
-                    self.stack.push(result);
+                    // let result = a + b;
+                    // self.stack.push(result);
                 }
                 0x01 => {
                     let b = self.get_val()?;
                     let a = self.get_val()?;
-                    let result = a - b;
-                    self.stack.push(result);
+                    // let result = a - b;
+                    // self.stack.push(result);
                 }
                 0x02 => {
                     let value = self.get_val()?;
-                    self.stack.push(-value);
+                    // self.stack.push(-value);
                 }
                 0x03 => {
                     let b = self.get_val()?;
                     let a = self.get_val()?;
-                    let result = a * b;
-                    self.stack.push(result);
+                    // let result = a * b;
+                    // self.stack.push(result);
                 }
                 0x04 => {
                     let b = self.get_val()?;
                     let a = self.get_val()?;
-                    let result = a / b;
-                    self.stack.push(result);
+                    // let result = a / b;
+                    // self.stack.push(result);
                 }
                 0x05 => todo!(),
                 0x06 => todo!(),
@@ -69,7 +70,7 @@ impl Vm {
                 0x0D => {
                     let constant = self.read_byte().ok_or(())?;
                     let value = self.chunk.get_constant(constant as usize).ok_or(())?;
-                    self.stack.push(value);
+                    // self.stack.push(value);
                 }
                 _ => return Err(()),
             }

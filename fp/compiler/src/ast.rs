@@ -14,8 +14,8 @@ pub enum ParseObj {
 
 #[derive(Debug)]
 pub struct Located<T> {
-    node: T,
-    location: Location,
+    pub node: T,
+    pub location: Location,
 }
 
 impl<T> Located<T> {
@@ -47,8 +47,8 @@ pub type Expr = Located<ExprKind>;
 
 #[derive(Debug)]
 pub enum Unaryop {
-    Sub,
     Not,
+    Minus,
 }
 
 #[derive(Debug)]

@@ -152,7 +152,7 @@ impl Parser<'_> {
         if self.check(&[Bang, Minus]) {
             let op = match self.now.kind() {
                 Bang => Unaryop::Not,
-                Minus => Unaryop::Sub,
+                Minus => Unaryop::Minus,
                 _ => panic!(),
             };
             let operand = self.unary();
