@@ -365,15 +365,10 @@ mod test {
     #[test]
     fn str_sub_any() {
         let a = Value::Str("a test str".to_owned());
-        let b_and_result = make_a_and_result!(
-            Err(()),
-            Err(()),
-            Err(()),
-            Err(())
-        );
+        let b_and_result = make_a_and_result!(Err(()), Err(()), Err(()), Err(()));
         value_op_any(a, b_and_result, Box::new(|a, b| a - b));
     }
-    
+
     #[test]
     fn str_mul_any() {
         let a = Value::Str("a test str".to_owned());
@@ -389,12 +384,7 @@ mod test {
     #[test]
     fn str_div_any() {
         let a = Value::Str("a test str".to_owned());
-        let b_and_result = make_a_and_result!(
-            Err(()),
-            Err(()),
-            Err(()),
-            Err(())
-        );
+        let b_and_result = make_a_and_result!(Err(()), Err(()), Err(()), Err(()));
         value_op_any(a, b_and_result, Box::new(|a, b| a / b));
     }
 }
