@@ -65,20 +65,23 @@ impl Vm {
                     let a = self.get_val()?;
                     let result = a == b;
                     self.stack.push(Value::Bool(result));
-                },
+                }
                 0x0A => {
                     let b = self.get_val()?;
                     let a = self.get_val()?;
                     let result = a > b;
                     self.stack.push(Value::Bool(result));
-                },
+                }
                 0x0B => {
                     let b = self.get_val()?;
                     let a = self.get_val()?;
                     let result = a < b;
                     self.stack.push(Value::Bool(result));
-                },
+                }
                 0x0C => {
+                    #[cfg(debug_assertions)]
+                    println!("{:#?}", self.stack);
+
                     return Ok(());
                 }
                 0x0D => {

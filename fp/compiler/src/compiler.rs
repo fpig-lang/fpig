@@ -16,6 +16,11 @@ impl Compiler {
 
     pub fn compile(&mut self, ast: Expr) {
         self.compile_expr(ast);
+        self.emit(OpCode::Return as u8);
+    }
+
+    pub fn pop_chunk(&mut self) -> Chunk {
+        std::mem::replace(&mut self.chunk, Chunk::new())
     }
 
     fn compile_expr(&mut self, expr: Expr) {
@@ -65,7 +70,7 @@ impl Compiler {
     fn compile_literal(&mut self, value: ParseObj) {
         match value {
             ParseObj::Nil => self.emit(OpCode::Nil as u8),
-            ParseObj::Bool(_) => todo!(),
+            ParseObj::Bool(b) => self.emit_constant(Value::Bool(b)),
             ParseObj::Int(v) => self.emit_constant(Value::Int(v as i64)),
             ParseObj::Float(v) => self.emit_constant(Value::Float(v)),
             ParseObj::Str(s) => self.emit_constant(Value::Str(s)),
