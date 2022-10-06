@@ -1,5 +1,5 @@
 use utils::op::OpCode;
-use vm::chunk::Chunk;
+use vm::{chunk::Chunk, value::Value};
 
 use crate::ast::{Binaryop, Expr, ExprKind, ParseObj, Unaryop};
 
@@ -66,9 +66,9 @@ impl Compiler {
         match value {
             ParseObj::Nil => self.emit(OpCode::Nil as u8),
             ParseObj::Bool(_) => todo!(),
-            ParseObj::Int(_) => todo!(),
-            ParseObj::Float(_) => todo!(),
-            ParseObj::Str(_) => todo!(),
+            ParseObj::Int(v) => self.emit_constant(Value::Int(v as i64)),
+            ParseObj::Float(v) => self.emit_constant(Value::Float(v)),
+            ParseObj::Str(s) => self.emit_constant(Value::Str(s)),
             ParseObj::Ident(_) => todo!(),
         }
     }
@@ -78,5 +78,16 @@ impl Compiler {
             Unaryop::Not => self.emit(OpCode::Not as u8),
             Unaryop::Minus => todo!(),
         }
+    }
+
+    fn emit_constant(&mut self, value: Value) {
+        let index = self.chunk.write_constant(value);
+        self.chunk.write_code(OpCode::Constant as u8);
+
+        // TODO: add two byte argument support
+        if index > u8::MAX as usize {
+            todo!()
+        }
+        self.chunk.write_code(index as u8);
     }
 }

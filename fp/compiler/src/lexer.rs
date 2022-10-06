@@ -10,8 +10,6 @@ const PREDEFINED: &[(&str, TokenKind)] = &[
     ("else", TokenKind::Else),
     ("for", TokenKind::For),
     ("while", TokenKind::While),
-    ("and", TokenKind::And),
-    ("or", TokenKind::Or),
     ("fn", TokenKind::Fun),
     ("return", TokenKind::Return),
     ("true", TokenKind::True),
@@ -116,6 +114,16 @@ impl Cursor<'_> {
                 TokenKind::LtE
             }
             '<' => TokenKind::Lt,
+            '|' if self.first() == '|' => {
+                self.bump();
+                TokenKind::Or
+            }
+            // TODO: bind '|' to "bit or"
+            '&' if self.first() == '&' => {
+                self.bump();
+                TokenKind::And
+            }
+            // TODO: bind '&' to "bit and"
 
             // identifier or predefined (e.g. let, if, else, for...)
             c if is_ident_start(c) => self.ident_or_predefined(c),
