@@ -56,13 +56,28 @@ impl Vm {
                     let result = (a / b)?;
                     self.stack.push(result);
                 }
-                0x05 => todo!(),
-                0x06 => todo!(),
+                0x05 => self.stack.push(Value::Bool(true)),
+                0x06 => self.stack.push(Value::Bool(false)),
                 0x07 => self.stack.push(Value::Nil),
                 0x08 => todo!(),
-                0x09 => todo!(),
-                0x0A => todo!(),
-                0x0B => todo!(),
+                0x09 => {
+                    let b = self.get_val()?;
+                    let a = self.get_val()?;
+                    let result = a == b;
+                    self.stack.push(Value::Bool(result));
+                },
+                0x0A => {
+                    let b = self.get_val()?;
+                    let a = self.get_val()?;
+                    let result = a > b;
+                    self.stack.push(Value::Bool(result));
+                },
+                0x0B => {
+                    let b = self.get_val()?;
+                    let a = self.get_val()?;
+                    let result = a < b;
+                    self.stack.push(Value::Bool(result));
+                },
                 0x0C => {
                     return Ok(());
                 }
