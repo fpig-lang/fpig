@@ -1,5 +1,4 @@
-use utils::op::OpCode;
-use vm::{chunk::Chunk, value::Value};
+use vm::{chunk::Chunk, value::Value, op::OpCode};
 
 use crate::ast::{Binaryop, Expr, ExprKind, ParseObj, Unaryop};
 
