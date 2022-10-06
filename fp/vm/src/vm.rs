@@ -107,7 +107,7 @@ impl Vm {
 
 #[cfg(test)]
 mod tests {
-    use utils::op::OpCode;
+    use crate::op::OpCode;
 
     use crate::{chunk::Chunk, value::Value};
 
