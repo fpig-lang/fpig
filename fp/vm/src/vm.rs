@@ -79,7 +79,7 @@ impl Vm {
                     self.stack.push(Value::Bool(result));
                 }
                 0x0C => {
-                    #[cfg(debug_assertions)]
+                    #[cfg(feature = "vm_dev")]
                     println!("{:#?}", self.stack);
 
                     return Ok(());

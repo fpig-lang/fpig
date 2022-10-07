@@ -16,3 +16,8 @@ edition = "2021"
 [dependencies]
 compiler = { path = "fp/compiler" }
 vm = { path = "fp/vm" }
+
+[features]
+vm_dev = ["vm/vm_dev"]
+compiler_dev = ["compiler/compiler_dev"]
+fpig_dev = ["vm_dev", "compiler_dev"]
