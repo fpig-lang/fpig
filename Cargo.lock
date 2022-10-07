@@ -7,7 +7,6 @@ name = "compiler"
 version = "0.1.0"
 dependencies = [
  "unicode-xid",
- "utils",
  "vm",
 ]
 
@@ -26,12 +25,5 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "957e51f3646910546462e67d5f7599b9e4fb8acdd304b087a6494730f9eebf04"
 
 [[package]]
-name = "utils"
-version = "0.1.0"
-
-[[package]]
 name = "vm"
 version = "0.1.0"
-dependencies = [
- "utils",
-]

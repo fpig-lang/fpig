@@ -1,6 +1,6 @@
-use utils::location::Location;
+use crate::location::Location;
 
-use crate::ast::{ExprKind, ParseObj};
+use crate::ast::{ExprKind, ParseObj, Stmt, StmtKind};
 
 use crate::{
     ast::{Binaryop, Expr, Unaryop},
@@ -15,6 +15,8 @@ pub(crate) struct Parser<'a> {
 }
 
 impl Parser<'_> {
+    // TODO: make location really correct not just start at Stmt or Expr
+
     pub(crate) fn new(cursor: Cursor) -> Parser {
         Parser {
             cursor,
@@ -23,9 +25,41 @@ impl Parser<'_> {
         }
     }
 
-    pub(crate) fn parse(&mut self) -> Box<Expr> {
+    pub(crate) fn parse(&mut self) -> Box<Stmt> {
         self.eat();
-        self.expression()
+        self.declaration()
+    }
+
+    fn declaration(&mut self) -> Box<Stmt> {
+        self.statement()
+    }
+
+    fn statement(&mut self) -> Box<Stmt> {
+        let l = self.get_location();
+        match self.peek().kind() {
+            TokenKind::Let => {
+                self.eat();
+                self.var_declaration()
+            },
+            _ => Box::new(Stmt::new(StmtKind::ExprStmt { expr: self.expression() }, l)),
+        }
+    }
+
+    fn var_declaration(&mut self) -> Box<Stmt> {
+        let l = self.get_location();
+        // TODO: remove clone()
+        match self.peek().kind().clone() {
+            TokenKind::Ident { name } => {
+                if self.check(&[TokenKind::Eq]) {
+                    let expr = self.expression();
+                    return Box::new(Stmt::new(StmtKind::VarDec { name: name.to_owned(), value: expr }, l))
+                }
+
+                let expr = Box::new(Expr::new(ExprKind::Literal { value: ParseObj::Nil }, l));
+                Box::new(Stmt::new(StmtKind::VarDec { name: name.to_owned(), value: expr }, l))
+            },
+            _ => todo!()
+        }
     }
 
     fn expression(&mut self) -> Box<Expr> {

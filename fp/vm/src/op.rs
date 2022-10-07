@@ -13,4 +13,6 @@ pub enum OpCode {
     Lt = 0x0B,
     Return = 0x0C,
     Constant = 0x0D,
+    Pop = 0x0E,
+    DefineGlobal = 0x0F,
 }

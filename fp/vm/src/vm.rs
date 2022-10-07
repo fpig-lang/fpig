@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{chunk::Chunk, value::Value};
 
 type IntResult = Result<(), ()>;
@@ -6,6 +8,7 @@ pub struct Vm {
     chunk: Chunk,
     ip: usize,
     stack: Vec<Value>,
+    global: HashMap<u16, Value>,
 }
 
 impl Vm {
@@ -14,6 +17,7 @@ impl Vm {
             chunk,
             ip: 0,
             stack: Vec::with_capacity(8),
+            global: HashMap::new(),
         }
     }
 

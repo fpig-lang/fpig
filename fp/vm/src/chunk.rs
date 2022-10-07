@@ -1,4 +1,4 @@
-use utils::location::Location;
+use crate::location::Location;
 
 use crate::value::Value;
 

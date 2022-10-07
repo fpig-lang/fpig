@@ -1,6 +1,6 @@
 use core::f64;
 
-use utils::location::Location;
+use crate::location::Location;
 
 #[derive(Debug)]
 pub(crate) enum ParseObj {
@@ -23,6 +23,18 @@ impl<T> Located<T> {
     pub(crate) fn new(node: T, location: Location) -> Self {
         Located { node, location }
     }
+}
+
+pub(crate) type Stmt = Located<StmtKind>;
+
+pub(crate) enum StmtKind {
+    ExprStmt {
+        expr: Box<Expr>,
+    },
+    VarDec {
+        name: String,
+        value: Box<Expr>,
+    },
 }
 
 pub(crate) type Expr = Located<ExprKind>;

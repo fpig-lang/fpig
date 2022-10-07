@@ -1,7 +1,7 @@
 use core::fmt;
 use std::default;
 
-use utils::location::Location;
+use crate::location::Location;
 
 #[derive(Debug, PartialEq)]
 pub(crate) struct Token {

@@ -1,6 +1,6 @@
 use crate::token::{Token, TokenKind};
 use std::str::Chars;
-use utils::location::Location;
+use crate::location::Location;
 
 pub(crate) const EOF_CHAR: char = '\0';
 
@@ -254,7 +254,7 @@ impl Cursor<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use utils::location::Location;
+    use crate::location::Location;
 
     macro_rules! tokens {
         ($($kind: expr),+ $(,)?) => {

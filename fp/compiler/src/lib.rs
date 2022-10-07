@@ -3,6 +3,7 @@ mod compiler;
 mod lexer;
 mod parser;
 mod token;
+mod location;
 
 use compiler::Compiler;
 use lexer::Cursor;
@@ -14,6 +15,6 @@ pub fn compile(raw_code: &str) -> Chunk {
     let mut parser = Parser::new(cursor);
     let ast = parser.parse();
     let mut compiler = Compiler::new();
-    compiler.compile(*ast);
+    compiler.compile(ast);
     compiler.pop_chunk()
 }

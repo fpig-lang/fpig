@@ -1,6 +1,6 @@
 use vm::{chunk::Chunk, op::OpCode, value::Value};
 
-use crate::ast::{Binaryop, Expr, ExprKind, ParseObj, Unaryop};
+use crate::ast::{Binaryop, Expr, ExprKind, ParseObj, Unaryop, Stmt, StmtKind};
 
 pub(crate) struct Compiler {
     chunk: Chunk,
@@ -13,8 +13,8 @@ impl Compiler {
         }
     }
 
-    pub(crate) fn compile(&mut self, ast: Expr) {
-        self.compile_expr(ast);
+    pub(crate) fn compile(&mut self, ast: Box<Stmt>) {
+        self.compile_stmt(ast);
         self.emit(OpCode::Return as u8);
     }
 
@@ -22,21 +22,33 @@ impl Compiler {
         std::mem::replace(&mut self.chunk, Chunk::new())
     }
 
-    fn compile_expr(&mut self, expr: Expr) {
+    fn compile_stmt(&mut self, stmt: Box<Stmt>) {
+        match stmt.node {
+            StmtKind::ExprStmt { expr } => self.compile_expr(expr),
+            StmtKind::VarDec { name, value } => todo!()
+        }
+    }
+
+    fn compile_var_dec(&mut self, name: String, value: Box<Expr>) {
+        self.compile_expr(value);
+        
+    }
+
+    fn compile_expr(&mut self, expr: Box<Expr>) {
         match expr.node {
             ExprKind::Binary { left, op, right } => {
-                self.compile_expr(*left);
-                self.compile_expr(*right);
+                self.compile_expr(left);
+                self.compile_expr(right);
                 self.emit_binary_op(op);
             }
             ExprKind::Group { body } => {
-                self.compile_expr(*body);
+                self.compile_expr(body);
             }
             ExprKind::Literal { value } => {
                 self.compile_literal(value);
             }
             ExprKind::Unary { op, operand } => {
-                self.compile_expr(*operand);
+                self.compile_expr(operand);
                 self.emit_unaryop(op);
             }
         }

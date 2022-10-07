@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    "fp/utils",
     "fp/compiler",
     "fp/vm"
 ]
