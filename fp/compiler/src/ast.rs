@@ -3,7 +3,7 @@ use core::f64;
 use utils::location::Location;
 
 #[derive(Debug)]
-pub enum ParseObj {
+pub(crate) enum ParseObj {
     Nil,
     Bool(bool),
     Int(i32),
@@ -13,19 +13,22 @@ pub enum ParseObj {
 }
 
 #[derive(Debug)]
-pub struct Located<T> {
+#[allow(unused)]
+pub(crate) struct Located<T> {
     pub node: T,
     pub location: Location,
 }
 
 impl<T> Located<T> {
-    pub fn new(node: T, location: Location) -> Self {
+    pub(crate) fn new(node: T, location: Location) -> Self {
         Located { node, location }
     }
 }
 
+pub(crate) type Expr = Located<ExprKind>;
+
 #[derive(Debug)]
-pub enum ExprKind {
+pub(crate) enum ExprKind {
     Literal {
         value: ParseObj,
     },
@@ -43,16 +46,14 @@ pub enum ExprKind {
     },
 }
 
-pub type Expr = Located<ExprKind>;
-
 #[derive(Debug)]
-pub enum Unaryop {
+pub(crate) enum Unaryop {
     Not,
     Minus,
 }
 
 #[derive(Debug)]
-pub enum Binaryop {
+pub(crate) enum Binaryop {
     Add,
     Sub,
     Mult,

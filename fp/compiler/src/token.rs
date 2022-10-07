@@ -4,7 +4,7 @@ use std::default;
 use utils::location::Location;
 
 #[derive(Debug, PartialEq)]
-pub struct Token {
+pub(crate) struct Token {
     kind: TokenKind,
     location: Location,
 }
@@ -16,20 +16,20 @@ impl fmt::Display for Token {
 }
 
 impl Token {
-    pub fn new(kind: TokenKind, location: Location) -> Token {
+    pub(crate) fn new(kind: TokenKind, location: Location) -> Token {
         Token { kind, location }
     }
 
-    pub fn kind(&self) -> &TokenKind {
+    pub(crate) fn kind(&self) -> &TokenKind {
         &self.kind
     }
 
-    pub fn location(&self) -> &Location {
+    pub(crate) fn location(&self) -> &Location {
         &self.location
     }
 
     #[cfg(test)]
-    pub fn reset_location(&mut self) {
+    pub(crate) fn reset_location(&mut self) {
         self.location.reset();
     }
 }
@@ -46,7 +46,7 @@ impl default::Default for Token {
 
 #[rustfmt::skip]
 #[derive(Debug, PartialEq, Clone)]
-pub enum TokenKind {
+pub(crate) enum TokenKind {
     // single character
     Plus, Minus, Star, Slash, // + - * /
     Comma, Dot, Semi,         // , . ;

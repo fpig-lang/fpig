@@ -3,19 +3,24 @@ use vm::{chunk::Chunk, value::Value};
 
 use crate::ast::{Binaryop, Expr, ExprKind, ParseObj, Unaryop};
 
-pub struct Compiler {
+pub(crate) struct Compiler {
     chunk: Chunk,
 }
 
 impl Compiler {
-    pub fn new() -> Compiler {
+    pub(crate) fn new() -> Compiler {
         Compiler {
             chunk: Chunk::new(),
         }
     }
 
-    pub fn compile(&mut self, ast: Expr) {
+    pub(crate) fn compile(&mut self, ast: Expr) {
         self.compile_expr(ast);
+        self.emit(OpCode::Return as u8);
+    }
+
+    pub(crate) fn pop_chunk(&mut self) -> Chunk {
+        std::mem::replace(&mut self.chunk, Chunk::new())
     }
 
     fn compile_expr(&mut self, expr: Expr) {

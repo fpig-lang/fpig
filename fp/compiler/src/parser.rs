@@ -1,23 +1,21 @@
-// this file is on dev, only use panic() instead error handler!
-
 use utils::location::Location;
 
 use crate::ast::{ExprKind, ParseObj};
 
 use crate::{
     ast::{Binaryop, Expr, Unaryop},
-    cursor::Cursor,
+    lexer::Cursor,
     token::{Token, TokenKind},
 };
 
-pub struct Parser<'a> {
+pub(crate) struct Parser<'a> {
     cursor: Cursor<'a>,
     now: Token,
     next: Token,
 }
 
 impl Parser<'_> {
-    pub fn new(cursor: Cursor) -> Parser {
+    pub(crate) fn new(cursor: Cursor) -> Parser {
         Parser {
             cursor,
             now: Token::default(),
@@ -25,7 +23,7 @@ impl Parser<'_> {
         }
     }
 
-    pub fn parse(&mut self) -> Box<Expr> {
+    pub(crate) fn parse(&mut self) -> Box<Expr> {
         self.eat();
         self.expression()
     }
@@ -81,7 +79,7 @@ impl Parser<'_> {
             let op = match self.now.kind() {
                 EqEq => Binaryop::Eq,
                 BangEq => Binaryop::NotEq,
-                _ => panic!(),
+                _ => todo!(),
             };
             let right = self.expr_comparison();
             left = Box::new(Expr::new(ExprKind::Binary { left, op, right }, l));
@@ -101,7 +99,7 @@ impl Parser<'_> {
                 GtE => Binaryop::GtE,
                 Lt => Binaryop::Lt,
                 LtE => Binaryop::LtE,
-                _ => panic!(),
+                _ => todo!(),
             };
             let right = self.term();
             left = Box::new(Expr::new(ExprKind::Binary { left, op, right }, l));
@@ -119,7 +117,7 @@ impl Parser<'_> {
             let op = match self.now.kind() {
                 Plus => Binaryop::Add,
                 Minus => Binaryop::Sub,
-                _ => panic!(),
+                _ => todo!(),
             };
             let right = self.factor();
             left = Box::new(Expr::new(ExprKind::Binary { left, op, right }, l));
@@ -137,7 +135,7 @@ impl Parser<'_> {
             let op = match self.now.kind() {
                 Star => Binaryop::Mult,
                 Slash => Binaryop::Div,
-                _ => panic!(),
+                _ => todo!(),
             };
             let right = self.unary();
             left = Box::new(Expr::new(ExprKind::Binary { left, op, right }, l));
@@ -153,7 +151,7 @@ impl Parser<'_> {
             let op = match self.now.kind() {
                 Bang => Unaryop::Not,
                 Minus => Unaryop::Minus,
-                _ => panic!(),
+                _ => todo!(),
             };
             let operand = self.unary();
             return Box::new(Expr::new(ExprKind::Unary { op, operand }, l));
@@ -213,12 +211,12 @@ impl Parser<'_> {
                 self.eat();
                 let expr_inner = self.expression();
                 if !self.check(&[OpenParen]) {
-                    panic!()
+                    todo!()
                 }
                 // already eat
                 return Box::new(Expr::new(ExprKind::Group { body: expr_inner }, l));
             }
-            _ => panic!(),
+            _ => todo!(),
         };
         self.eat();
 

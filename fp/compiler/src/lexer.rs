@@ -1,7 +1,13 @@
-use crate::{
-    cursor::{Cursor, EOF_CHAR},
-    token::{Token, TokenKind},
-};
+use crate::token::{Token, TokenKind};
+use std::str::Chars;
+use utils::location::Location;
+
+pub(crate) const EOF_CHAR: char = '\0';
+
+pub(crate) struct Cursor<'a> {
+    chars: Chars<'a>,
+    location: Location,
+}
 
 // using array rather than slice may better
 const PREDEFINED: &[(&str, TokenKind)] = &[
@@ -57,21 +63,60 @@ fn is_ident_continue(c: char) -> bool {
     unicode_xid::UnicodeXID::is_xid_continue(c)
 }
 
-// wrap the cursor a iterator. same as rustc
-pub fn tokenize(input: &str) -> impl Iterator<Item = Token> + '_ {
-    let mut cursor = Cursor::new(input);
-    std::iter::from_fn(move || {
-        if cursor.is_eof() {
-            return None;
+// utils, similar to lexer in rustc
+impl<'a> Cursor<'a> {
+    pub(crate) fn new(input: &'a str) -> Cursor<'a> {
+        Cursor {
+            chars: input.chars(),
+            location: Location::default(),
         }
-        Some(cursor.advance_token())
-    })
+    }
+
+    fn first(&self) -> char {
+        self.chars.clone().next().unwrap_or(EOF_CHAR)
+    }
+
+    fn second(&self) -> char {
+        let mut iter = self.chars.clone();
+        iter.next();
+        iter.next().unwrap_or(EOF_CHAR)
+    }
+
+    // bump a char and not checked
+    // must be called after checked one of first(), second(), is_eof()
+    fn bump(&mut self) -> char {
+        let c = self.chars.next().unwrap_or(EOF_CHAR);
+        if c == '\n' {
+            self.location.new_line();
+        } else {
+            self.location.right();
+        }
+        c
+    }
+
+    fn location(&self) -> Location {
+        self.location
+    }
+
+    fn is_eof(&self) -> bool {
+        self.chars.as_str().is_empty()
+    }
+
+    // copied from rustc
+    fn eat_while(&mut self, mut predicate: impl FnMut(char) -> bool) {
+        // It was tried making optimized version of this for eg. line comments, but
+        // LLVM can inline all of this and compile it down to fast iteration over bytes.
+        while predicate(self.first()) && !self.is_eof() {
+            self.bump();
+        }
+    }
 }
 
+// real lexer
 impl Cursor<'_> {
     // not check the EOF. checking EOF will make this function return Option<Token>
     // or add and EOF in TokenKind. just check EOF before call this function.
-    pub fn advance_token(&mut self) -> Token {
+    pub(crate) fn advance_token(&mut self) -> Token {
         // space in this language have no meaning, just skip it.
         self.skip_space();
 
@@ -278,7 +323,7 @@ mod tests {
         let expect = tokens!(TokenKind::Str {
             value: "abc".to_string()
         });
-        assert!(tokenize(input).eq(expect));
+        assert!(tokenize_nonloc(input).eq(expect));
     }
 
     #[test]
