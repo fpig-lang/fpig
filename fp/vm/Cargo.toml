@@ -7,3 +7,6 @@ edition = "2021"
 
 [dependencies]
 utils = { path = "../utils" }
+
+[features]
+vm_dev = []

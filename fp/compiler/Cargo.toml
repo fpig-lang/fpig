@@ -9,3 +9,6 @@ edition = "2021"
 utils = { path = "../utils" }
 vm = { path = "../vm" }
 unicode-xid = "0.2.0"
+
+[features]
+compiler_dev = []

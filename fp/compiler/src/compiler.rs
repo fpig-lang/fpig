@@ -1,5 +1,4 @@
-use utils::op::OpCode;
-use vm::{chunk::Chunk, value::Value};
+use vm::{chunk::Chunk, op::OpCode, value::Value};
 
 use crate::ast::{Binaryop, Expr, ExprKind, ParseObj, Unaryop};
 
@@ -70,7 +69,7 @@ impl Compiler {
     fn compile_literal(&mut self, value: ParseObj) {
         match value {
             ParseObj::Nil => self.emit(OpCode::Nil as u8),
-            ParseObj::Bool(_) => todo!(),
+            ParseObj::Bool(b) => self.emit_constant(Value::Bool(b)),
             ParseObj::Int(v) => self.emit_constant(Value::Int(v as i64)),
             ParseObj::Float(v) => self.emit_constant(Value::Float(v)),
             ParseObj::Str(s) => self.emit_constant(Value::Str(s)),
