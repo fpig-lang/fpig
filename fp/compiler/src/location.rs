@@ -7,28 +7,29 @@ pub struct Location {
     column: usize,
 }
 
+#[allow(unused)]
 impl Location {
-    pub fn new(line: usize, column: usize) -> Self {
+    pub(crate) fn new(line: usize, column: usize) -> Self {
         Location { line, column }
     }
 
-    pub fn line(&self) -> usize {
+    pub(crate) fn line(&self) -> usize {
         self.line
     }
 
-    pub fn column(&self) -> usize {
+    pub(crate) fn column(&self) -> usize {
         self.column
     }
 
-    pub fn right(&mut self) {
+    pub(crate) fn right(&mut self) {
         self.column += 1;
     }
 
-    pub fn new_line(&mut self) {
+    pub(crate) fn new_line(&mut self) {
         self.line += 1;
     }
 
-    pub fn reset(&mut self) {
+    pub(crate) fn reset(&mut self) {
         self.line = 1;
         self.column = 1;
     }

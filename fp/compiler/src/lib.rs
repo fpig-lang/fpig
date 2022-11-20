@@ -5,16 +5,24 @@ mod parser;
 mod token;
 mod location;
 
-use compiler::Compiler;
 use lexer::Cursor;
 use parser::Parser;
 use vm::chunk::Chunk;
 
-pub fn compile(raw_code: &str) -> Chunk {
-    let cursor = Cursor::new(raw_code);
-    let mut parser = Parser::new(cursor);
-    let ast = parser.parse();
-    let mut compiler = Compiler::new();
-    compiler.compile(ast);
-    compiler.pop_chunk()
+pub struct Compiler {
+    compiler: compiler::Compiler,
+}
+
+impl Compiler {
+    pub fn new() -> Compiler {
+        Compiler { compiler: compiler::Compiler::new() }
+    }
+
+    pub fn compile(&mut self, raw_code: &str) -> Chunk {
+        let cursor = Cursor::new(raw_code);
+        let mut parser = Parser::new(cursor);
+        let ast = parser.parse();
+        self.compiler.compile(ast);
+        self.compiler.pop_chunk()
+    }
 }

@@ -1,37 +1,55 @@
+use std::collections::HashMap;
+
 use vm::{chunk::Chunk, op::OpCode, value::Value};
 
 use crate::ast::{Binaryop, Expr, ExprKind, ParseObj, Unaryop, Stmt, StmtKind};
 
 pub(crate) struct Compiler {
     chunk: Chunk,
+    global: HashMap<String, u16>,
 }
 
 impl Compiler {
     pub(crate) fn new() -> Compiler {
         Compiler {
             chunk: Chunk::new(),
+            global: HashMap::new(),
         }
     }
 
     pub(crate) fn compile(&mut self, ast: Box<Stmt>) {
+        #[cfg(feature = "compiler_dev")]
+        println!("compile ast: {:#?}", ast);
+
         self.compile_stmt(ast);
         self.emit(OpCode::Return as u8);
     }
 
     pub(crate) fn pop_chunk(&mut self) -> Chunk {
+        #[cfg(feature = "compiler_dev")]
+        println!("compiled chunk: {:#?}", self.chunk);
+
         std::mem::replace(&mut self.chunk, Chunk::new())
     }
 
     fn compile_stmt(&mut self, stmt: Box<Stmt>) {
         match stmt.node {
-            StmtKind::ExprStmt { expr } => self.compile_expr(expr),
-            StmtKind::VarDec { name, value } => todo!()
+            StmtKind::ExprStmt { expr } => {
+                self.compile_expr(expr);
+                self.emit(OpCode::Pop as u8)
+            },
+            StmtKind::VarDec { name, value } => self.compile_var_dec(name, value),
         }
     }
 
     fn compile_var_dec(&mut self, name: String, value: Box<Expr>) {
         self.compile_expr(value);
-        
+        // TODO: ensure len of global low than u16::MAX
+        let i = self.global.len() as u16;
+        self.global.insert(name, i);
+        self.emit(OpCode::DefineGlobal as u8);
+        // TODO: add long byte(u16) support
+        self.emit(i as u8);
     }
 
     fn compile_expr(&mut self, expr: Box<Expr>) {
@@ -85,7 +103,13 @@ impl Compiler {
             ParseObj::Int(v) => self.emit_constant(Value::Int(v as i64)),
             ParseObj::Float(v) => self.emit_constant(Value::Float(v)),
             ParseObj::Str(s) => self.emit_constant(Value::Str(s)),
-            ParseObj::Ident(_) => todo!(),
+            ParseObj::Ident(name) => {
+                // TODO: add NameError to point name is not defined
+                let i = self.global.get(&name).unwrap().clone();
+                self.emit(OpCode::GetGlobal as u8);
+                // TODO: long byte(u16) support
+                self.emit(i as u8);
+            },
         }
     }
 

@@ -27,6 +27,7 @@ impl<T> Located<T> {
 
 pub(crate) type Stmt = Located<StmtKind>;
 
+#[derive(Debug)]
 pub(crate) enum StmtKind {
     ExprStmt {
         expr: Box<Expr>,

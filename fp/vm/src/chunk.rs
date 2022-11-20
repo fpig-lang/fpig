@@ -2,6 +2,7 @@ use crate::location::Location;
 
 use crate::value::Value;
 
+#[derive(Debug)]
 pub struct Chunk {
     code: Vec<u8>,
     constants: Vec<Value>,
@@ -21,12 +22,17 @@ impl Chunk {
         self.code.get(i).copied()
     }
 
-    pub fn get_bytes(&self, start: usize, end: usize) -> Option<&[u8]> {
-        if end >= self.code.len() || start > end {
+    pub fn get_long_bytes(&self, start: usize) -> Option<u16> {
+        if start + 2 > self.code.len() {
             return None;
         }
 
-        Some(&self.code[start..end])
+        let high = self.get_byte(start)?;
+        let low = self.get_byte(start + 1)?;
+
+        let bytes = [high, low];
+
+        Some(u16::from_be_bytes(bytes))
     }
 
     pub fn get_constant(&self, i: usize) -> Option<&Value> {

@@ -31,16 +31,18 @@ impl Parser<'_> {
     }
 
     fn declaration(&mut self) -> Box<Stmt> {
-        self.statement()
+        match self.peek().kind() {
+            TokenKind::Let => {
+                self.eat(); // eat the Token Let
+                self.var_declaration()
+            }
+            _ => self.statement(),
+        }
     }
 
     fn statement(&mut self) -> Box<Stmt> {
         let l = self.get_location();
         match self.peek().kind() {
-            TokenKind::Let => {
-                self.eat();
-                self.var_declaration()
-            },
             _ => Box::new(Stmt::new(StmtKind::ExprStmt { expr: self.expression() }, l)),
         }
     }
@@ -50,6 +52,7 @@ impl Parser<'_> {
         // TODO: remove clone()
         match self.peek().kind().clone() {
             TokenKind::Ident { name } => {
+                self.eat();
                 if self.check(&[TokenKind::Eq]) {
                     let expr = self.expression();
                     return Box::new(Stmt::new(StmtKind::VarDec { name: name.to_owned(), value: expr }, l))

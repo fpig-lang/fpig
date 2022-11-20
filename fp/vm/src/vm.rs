@@ -12,17 +12,22 @@ pub struct Vm {
 }
 
 impl Vm {
-    pub fn new(chunk: Chunk) -> Self {
+    pub fn new() -> Self {
         Vm {
-            chunk,
+            chunk: Chunk::new(),
             ip: 0,
             stack: Vec::with_capacity(8),
             global: HashMap::new(),
         }
     }
 
-    pub fn interpret(&mut self) -> IntResult {
+    pub fn set_chunk(&mut self, chunk: Chunk) {
         self.ip = 0;
+        self.chunk = chunk;
+    }
+
+    pub fn interpret(&mut self, chunk: Chunk) -> IntResult {
+        self.set_chunk(chunk);
         self.run()
     }
 
@@ -84,7 +89,10 @@ impl Vm {
                 }
                 0x0C => {
                     #[cfg(feature = "vm_dev")]
-                    println!("{:#?}", self.stack);
+                    {
+                        println!("{:?}", self.stack);
+                        println!("{:?}", self.global);
+                    }
 
                     return Ok(());
                 }
@@ -93,6 +101,34 @@ impl Vm {
                     let value = self.chunk.get_constant(constant as usize).ok_or(())?;
                     self.stack.push(value.clone());
                 }
+                0x0E => {
+                    let constant = self.read_long_byte().ok_or(())?;
+                    let value = self.chunk.get_constant(constant as usize).ok_or(())?;
+                    self.stack.push(value.clone())
+                }
+                0x0F => {
+                    let a = self.stack.pop().unwrap_or(Value::Nil);
+
+                    #[cfg(feature = "vm_dev")]
+                    println!("{:?}", a);
+                }
+                0x10 => {
+                    let i = self.read_byte().ok_or(())? as u16;
+                    let value = self.stack.pop().ok_or(())?;
+                    self.global.insert(i, value);
+
+                    #[cfg(feature = "vm_dev")]
+                    println!("{:?}", self.global)
+                }
+                0x11 => {
+                    todo!()
+                }
+                0x12 => {
+                    let i = self.read_byte().ok_or(())?;
+                    let value = self.global.get(&(i as u16)).ok_or(())?;
+                    self.stack.push(value.clone());
+                }
+                0x13 => todo!(),
                 _ => return Err(()),
             }
         }
@@ -102,6 +138,12 @@ impl Vm {
         let byte = self.chunk.get_byte(self.ip);
         self.ip += 1;
         byte
+    }
+
+    fn read_long_byte(&mut self) -> Option<u16> {
+        let long_byte = self.chunk.get_long_bytes(self.ip);
+        self.ip += 2;
+        long_byte
     }
 
     fn get_val(&mut self) -> Result<Value, ()> {
@@ -126,7 +168,9 @@ mod tests {
         for code in codes {
             chunk.write_code(*code as u8);
         }
-        Vm::new(chunk)
+        let mut vm = Vm::new();
+        vm.set_chunk(chunk);
+        vm
     }
 
     #[test]
