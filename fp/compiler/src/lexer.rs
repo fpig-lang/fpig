@@ -1,12 +1,10 @@
 use crate::token::{Token, TokenKind};
 use std::str::Chars;
-use crate::location::Location;
 
 pub(crate) const EOF_CHAR: char = '\0';
 
 pub(crate) struct Cursor<'a> {
     chars: Chars<'a>,
-    location: Location,
 }
 
 // using array rather than slice may better
@@ -68,7 +66,6 @@ impl<'a> Cursor<'a> {
     pub(crate) fn new(input: &'a str) -> Cursor<'a> {
         Cursor {
             chars: input.chars(),
-            location: Location::default(),
         }
     }
 
@@ -86,16 +83,7 @@ impl<'a> Cursor<'a> {
     // must be called after checked one of first(), second(), is_eof()
     fn bump(&mut self) -> char {
         let c = self.chars.next().unwrap_or(EOF_CHAR);
-        if c == '\n' {
-            self.location.new_line();
-        } else {
-            self.location.right();
-        }
         c
-    }
-
-    fn location(&self) -> Location {
-        self.location
     }
 
     fn is_eof(&self) -> bool {
@@ -115,13 +103,10 @@ impl<'a> Cursor<'a> {
 // real lexer
 impl Cursor<'_> {
     // not check the EOF. checking EOF will make this function return Option<Token>
-    // or add and EOF in TokenKind. just check EOF before call this function.
+    // or add an EOF in TokenKind. just check EOF before call this function.
     pub(crate) fn advance_token(&mut self) -> Token {
         // space in this language have no meaning, just skip it.
         self.skip_space();
-
-        // this location is used in Token
-        let start_location = self.location();
 
         let start_char = self.bump();
         let token_kind = match start_char {
@@ -181,7 +166,7 @@ impl Cursor<'_> {
 
             _ => TokenKind::Error,
         };
-        Token::new(token_kind, start_location)
+        Token::new(token_kind)
     }
 
     // numbers, like 123, 123.4
@@ -254,14 +239,13 @@ impl Cursor<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::location::Location;
 
     macro_rules! tokens {
         ($($kind: expr),+ $(,)?) => {
             {
                 let mut tokens = Vec::new();
                 $(
-                    tokens.push(Token::new($kind, Location::new(1, 1)));
+                    tokens.push(Token::new($kind));
                 ) *
                 tokens.into_iter()
             }
@@ -274,8 +258,7 @@ mod tests {
             if cursor.is_eof() {
                 return None;
             }
-            let mut token = cursor.advance_token();
-            token.reset_location();
+            let token = cursor.advance_token();
             Some(token)
         })
     }
@@ -373,8 +356,8 @@ mod tests {
     fn test_keywords() {
         use TokenKind::*;
 
-        let input = "let if else for while and or fn return";
-        let expect = tokens![Let, If, Else, For, While, And, Or, Fun, Return,];
+        let input = "let if else for while fn return";
+        let expect = tokens![Let, If, Else, For, While, Fun, Return,];
         assert!(tokenize_nonloc(input).eq(expect));
     }
 }

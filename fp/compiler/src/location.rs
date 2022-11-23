@@ -1,8 +1,12 @@
 use core::fmt;
 use std::default;
 
+// dont use this file at the early dev in fpig,
+// it makes thing become really complex.
+// just add location support when fpig's compiler is finished.
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Location {
+pub(crate) struct Location {
     line: usize,
     column: usize,
 }

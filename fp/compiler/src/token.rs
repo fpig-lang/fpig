@@ -1,36 +1,24 @@
 use core::fmt;
 use std::default;
 
-use crate::location::Location;
-
 #[derive(Debug, PartialEq)]
 pub(crate) struct Token {
     kind: TokenKind,
-    location: Location,
 }
 
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "location: {}, token kind: {}", self.location, self.kind)
+        write!(f, "token kind: {}", self.kind())
     }
 }
 
 impl Token {
-    pub(crate) fn new(kind: TokenKind, location: Location) -> Token {
-        Token { kind, location }
+    pub(crate) fn new(kind: TokenKind) -> Token {
+        Token { kind }
     }
 
     pub(crate) fn kind(&self) -> &TokenKind {
         &self.kind
-    }
-
-    pub(crate) fn location(&self) -> &Location {
-        &self.location
-    }
-
-    #[cfg(test)]
-    pub(crate) fn reset_location(&mut self) {
-        self.location.reset();
     }
 }
 
@@ -39,7 +27,6 @@ impl default::Default for Token {
     fn default() -> Self {
         Token {
             kind: TokenKind::Eof,
-            location: Default::default(),
         }
     }
 }

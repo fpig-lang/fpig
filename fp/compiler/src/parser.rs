@@ -1,5 +1,3 @@
-use crate::location::Location;
-
 use crate::ast::{ExprKind, ParseObj, Stmt, StmtKind};
 
 use crate::{
@@ -41,25 +39,23 @@ impl Parser<'_> {
     }
 
     fn statement(&mut self) -> Box<Stmt> {
-        let l = self.get_location();
         match self.peek().kind() {
-            _ => Box::new(Stmt::new(StmtKind::ExprStmt { expr: self.expression() }, l)),
+            _ => Box::new(Stmt::new(StmtKind::ExprStmt { expr: self.expression() })),
         }
     }
 
     fn var_declaration(&mut self) -> Box<Stmt> {
-        let l = self.get_location();
         // TODO: remove clone()
         match self.peek().kind().clone() {
             TokenKind::Ident { name } => {
                 self.eat();
                 if self.check(&[TokenKind::Eq]) {
                     let expr = self.expression();
-                    return Box::new(Stmt::new(StmtKind::VarDec { name: name.to_owned(), value: expr }, l))
+                    return Box::new(Stmt::new(StmtKind::VarDec { name: name.to_owned(), value: expr }))
                 }
 
-                let expr = Box::new(Expr::new(ExprKind::Literal { value: ParseObj::Nil }, l));
-                Box::new(Stmt::new(StmtKind::VarDec { name: name.to_owned(), value: expr }, l))
+                let expr = Box::new(Expr::new(ExprKind::Literal { value: ParseObj::Nil }));
+                Box::new(Stmt::new(StmtKind::VarDec { name: name.to_owned(), value: expr }))
             },
             _ => todo!()
         }
@@ -70,7 +66,6 @@ impl Parser<'_> {
     }
 
     fn expr_and(&mut self) -> Box<Expr> {
-        let l = self.get_location();
         let mut left = self.expr_or();
 
         while self.check(&[TokenKind::And]) {
@@ -81,7 +76,6 @@ impl Parser<'_> {
                     op: Binaryop::And,
                     right,
                 },
-                l,
             ));
         }
 
@@ -89,7 +83,6 @@ impl Parser<'_> {
     }
 
     fn expr_or(&mut self) -> Box<Expr> {
-        let l = self.get_location();
         let mut left = self.expr_equal();
 
         while self.check(&[TokenKind::Or]) {
@@ -100,7 +93,6 @@ impl Parser<'_> {
                     op: Binaryop::Or,
                     right,
                 },
-                l,
             ));
         }
 
@@ -108,7 +100,6 @@ impl Parser<'_> {
     }
 
     fn expr_equal(&mut self) -> Box<Expr> {
-        let l = self.get_location();
         let mut left = self.expr_comparison();
 
         use TokenKind::*;
@@ -119,14 +110,13 @@ impl Parser<'_> {
                 _ => todo!(),
             };
             let right = self.expr_comparison();
-            left = Box::new(Expr::new(ExprKind::Binary { left, op, right }, l));
+            left = Box::new(Expr::new(ExprKind::Binary { left, op, right }));
         }
 
         left
     }
 
     fn expr_comparison(&mut self) -> Box<Expr> {
-        let l = self.get_location();
         let mut left = self.term();
 
         use TokenKind::*;
@@ -139,14 +129,13 @@ impl Parser<'_> {
                 _ => todo!(),
             };
             let right = self.term();
-            left = Box::new(Expr::new(ExprKind::Binary { left, op, right }, l));
+            left = Box::new(Expr::new(ExprKind::Binary { left, op, right }));
         }
 
         left
     }
 
     fn term(&mut self) -> Box<Expr> {
-        let l = self.get_location();
         let mut left = self.factor();
 
         use TokenKind::*;
@@ -157,14 +146,13 @@ impl Parser<'_> {
                 _ => todo!(),
             };
             let right = self.factor();
-            left = Box::new(Expr::new(ExprKind::Binary { left, op, right }, l));
+            left = Box::new(Expr::new(ExprKind::Binary { left, op, right }));
         }
 
         left
     }
 
     fn factor(&mut self) -> Box<Expr> {
-        let l = self.get_location();
         let mut left = self.unary();
 
         use TokenKind::*;
@@ -175,14 +163,13 @@ impl Parser<'_> {
                 _ => todo!(),
             };
             let right = self.unary();
-            left = Box::new(Expr::new(ExprKind::Binary { left, op, right }, l));
+            left = Box::new(Expr::new(ExprKind::Binary { left, op, right }));
         }
 
         left
     }
 
     fn unary(&mut self) -> Box<Expr> {
-        let l = self.get_location();
         use TokenKind::*;
         if self.check(&[Bang, Minus]) {
             let op = match self.now.kind() {
@@ -191,14 +178,13 @@ impl Parser<'_> {
                 _ => todo!(),
             };
             let operand = self.unary();
-            return Box::new(Expr::new(ExprKind::Unary { op, operand }, l));
+            return Box::new(Expr::new(ExprKind::Unary { op, operand }));
         }
 
         self.primary()
     }
 
     fn primary(&mut self) -> Box<Expr> {
-        let l = self.get_location();
         use TokenKind::*;
 
         let expr = match self.peek().kind() {
@@ -206,43 +192,36 @@ impl Parser<'_> {
                 ExprKind::Literal {
                     value: ParseObj::Bool(true),
                 },
-                l,
             )),
             False => Box::new(Expr::new(
                 ExprKind::Literal {
                     value: ParseObj::Bool(false),
                 },
-                l,
             )),
             Nil => Box::new(Expr::new(
                 ExprKind::Literal {
                     value: ParseObj::Nil,
                 },
-                l,
             )),
             Int { value } => Box::new(Expr::new(
                 ExprKind::Literal {
                     value: ParseObj::Int(*value),
                 },
-                l,
             )),
             Float { value } => Box::new(Expr::new(
                 ExprKind::Literal {
                     value: ParseObj::Float(*value),
                 },
-                l,
             )),
             Str { value } => Box::new(Expr::new(
                 ExprKind::Literal {
                     value: ParseObj::Str(value.clone()),
                 },
-                l,
             )),
             Ident { name } => Box::new(Expr::new(
                 ExprKind::Literal {
                     value: ParseObj::Ident(name.clone()),
                 },
-                l,
             )),
             OpenParen => {
                 self.eat();
@@ -251,7 +230,7 @@ impl Parser<'_> {
                     todo!()
                 }
                 // already eat
-                return Box::new(Expr::new(ExprKind::Group { body: expr_inner }, l));
+                return Box::new(Expr::new(ExprKind::Group { body: expr_inner }));
             }
             _ => todo!(),
         };
@@ -278,9 +257,5 @@ impl Parser<'_> {
 
     fn peek(&self) -> &Token {
         &self.next
-    }
-
-    fn get_location(&self) -> Location {
-        *self.now.location()
     }
 }

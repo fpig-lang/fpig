@@ -1,7 +1,5 @@
 use core::f64;
 
-use crate::location::Location;
-
 #[derive(Debug)]
 pub(crate) enum ParseObj {
     Nil,
@@ -9,19 +7,18 @@ pub(crate) enum ParseObj {
     Int(i32),
     Float(f64),
     Str(String),
-    Ident(String),
+    Ident(String), // TODO: use a u16 for idx instead use String directly
 }
 
 #[derive(Debug)]
 #[allow(unused)]
 pub(crate) struct Located<T> {
     pub node: T,
-    pub location: Location,
 }
 
 impl<T> Located<T> {
-    pub(crate) fn new(node: T, location: Location) -> Self {
-        Located { node, location }
+    pub(crate) fn new(node: T) -> Self {
+        Located { node }
     }
 }
 
