@@ -56,3 +56,9 @@ impl Chunk {
         self.locations.push(l)
     }
 }
+
+impl Default for Chunk {
+    fn default() -> Self {
+        Self::new()
+    }
+}

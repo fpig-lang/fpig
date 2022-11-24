@@ -82,8 +82,7 @@ impl<'a> Cursor<'a> {
     // bump a char and not checked
     // must be called after checked one of first(), second(), is_eof()
     fn bump(&mut self) -> char {
-        let c = self.chars.next().unwrap_or(EOF_CHAR);
-        c
+        self.chars.next().unwrap_or(EOF_CHAR)
     }
 
     fn is_eof(&self) -> bool {

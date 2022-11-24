@@ -51,11 +51,11 @@ impl Parser<'_> {
                 self.eat();
                 if self.check(&[TokenKind::Eq]) {
                     let expr = self.expression();
-                    return Box::new(Stmt::new(StmtKind::VarDec { name: name.to_owned(), value: expr }))
+                    return Box::new(Stmt::new(StmtKind::VarDec { name, value: expr }))
                 }
 
                 let expr = Box::new(Expr::new(ExprKind::Literal { value: ParseObj::Nil }));
-                Box::new(Stmt::new(StmtKind::VarDec { name: name.to_owned(), value: expr }))
+                Box::new(Stmt::new(StmtKind::VarDec { name, value: expr }))
             },
             _ => todo!()
         }

@@ -12,6 +12,6 @@ fn main() {
         let mut input = String::new();
         io::stdin().read_line(&mut input).unwrap();
         let chunk = compiler.compile(&input);
-        vm.interpret(chunk);
+        vm.interpret(chunk).expect("fail to run");
     }
 }

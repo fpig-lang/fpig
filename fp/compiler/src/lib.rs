@@ -22,7 +22,13 @@ impl Compiler {
         let cursor = Cursor::new(raw_code);
         let mut parser = Parser::new(cursor);
         let ast = parser.parse();
-        self.compiler.compile(ast);
+        self.compiler.compile(*ast);
         self.compiler.pop_chunk()
+    }
+}
+
+impl Default for Compiler {
+    fn default() -> Self {
+        Self::new()
     }
 }

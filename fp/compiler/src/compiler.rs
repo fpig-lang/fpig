@@ -17,7 +17,7 @@ impl Compiler {
         }
     }
 
-    pub(crate) fn compile(&mut self, ast: Box<Stmt>) {
+    pub(crate) fn compile(&mut self, ast: Stmt) {
         #[cfg(feature = "compiler_dev")]
         println!("compile ast: {:#?}", ast);
 
@@ -32,17 +32,17 @@ impl Compiler {
         std::mem::replace(&mut self.chunk, Chunk::new())
     }
 
-    fn compile_stmt(&mut self, stmt: Box<Stmt>) {
+    fn compile_stmt(&mut self, stmt: Stmt) {
         match stmt.node {
             StmtKind::ExprStmt { expr } => {
-                self.compile_expr(expr);
+                self.compile_expr(*expr);
                 self.emit(OpCode::Pop as u8)
             },
-            StmtKind::VarDec { name, value } => self.compile_var_dec(name, value),
+            StmtKind::VarDec { name, value } => self.compile_var_dec(name, *value),
         }
     }
 
-    fn compile_var_dec(&mut self, name: String, value: Box<Expr>) {
+    fn compile_var_dec(&mut self, name: String, value: Expr) {
         self.compile_expr(value);
         // TODO: ensure len of global low than u16::MAX
         let i = self.global.len() as u16;
@@ -52,21 +52,21 @@ impl Compiler {
         self.emit(i as u8);
     }
 
-    fn compile_expr(&mut self, expr: Box<Expr>) {
+    fn compile_expr(&mut self, expr: Expr) {
         match expr.node {
             ExprKind::Binary { left, op, right } => {
-                self.compile_expr(left);
-                self.compile_expr(right);
+                self.compile_expr(*left);
+                self.compile_expr(*right);
                 self.emit_binary_op(op);
             }
             ExprKind::Group { body } => {
-                self.compile_expr(body);
+                self.compile_expr(*body);
             }
             ExprKind::Literal { value } => {
                 self.compile_literal(value);
             }
             ExprKind::Unary { op, operand } => {
-                self.compile_expr(operand);
+                self.compile_expr(*operand);
                 self.emit_unaryop(op);
             }
         }
@@ -105,7 +105,7 @@ impl Compiler {
             ParseObj::Str(s) => self.emit_constant(Value::Str(s)),
             ParseObj::Ident(name) => {
                 // TODO: add NameError to point name is not defined
-                let i = self.global.get(&name).unwrap().clone();
+                let i = *self.global.get(&name).unwrap();
                 self.emit(OpCode::GetGlobal as u8);
                 // TODO: long byte(u16) support
                 self.emit(i as u8);
@@ -131,3 +131,4 @@ impl Compiler {
         self.chunk.write_code(index as u8);
     }
 }
+
