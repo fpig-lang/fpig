@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use vm::{chunk::Chunk, op::OpCode, value::Value};
 
-use crate::ast::{Binaryop, Expr, ExprKind, ParseObj, Unaryop, Stmt, StmtKind};
+use crate::ast::{BinaryOp, Expr, ExprKind, ParseObj, UnaryOp, Stmt, StmtKind};
 
 pub(crate) struct Compiler {
     chunk: Chunk,
@@ -22,7 +22,7 @@ impl Compiler {
         println!("compile ast: {:#?}", ast);
 
         self.compile_stmt(ast);
-        self.emit(OpCode::Return as u8);
+        self.emit_opcode(OpCode::Return);
     }
 
     pub(crate) fn pop_chunk(&mut self) -> Chunk {
@@ -36,7 +36,7 @@ impl Compiler {
         match stmt.node {
             StmtKind::ExprStmt { expr } => {
                 self.compile_expr(*expr);
-                self.emit(OpCode::Pop as u8)
+                self.emit_opcode(OpCode::Pop)
             },
             StmtKind::VarDec { name, value } => self.compile_var_dec(name, *value),
         }
@@ -47,8 +47,15 @@ impl Compiler {
         // TODO: ensure len of global low than u16::MAX
         let i = self.global.len() as u16;
         self.global.insert(name, i);
+
+        if i > u8::MAX as u16 {
+            self.emit_opcode(OpCode::DefineGlobalLong );
+            // TODO: split u16 to 2 u8
+
+            return;
+        }
+
         self.emit(OpCode::DefineGlobal as u8);
-        // TODO: add long byte(u16) support
         self.emit(i as u8);
     }
 
@@ -76,29 +83,33 @@ impl Compiler {
         self.chunk.write_code(code);
     }
 
-    fn emit_binary_op(&mut self, op: Binaryop) {
+    fn emit_opcode(&mut self, code: OpCode) {
+        self.chunk.write_code(code as u8);
+    }
+
+    fn emit_binary_op(&mut self, op: BinaryOp) {
         match op {
-            Binaryop::Add => self.emit(OpCode::Add as u8),
-            Binaryop::Sub => self.emit(OpCode::Sub as u8),
-            Binaryop::Mult => self.emit(OpCode::Mult as u8),
-            Binaryop::Div => self.emit(OpCode::Div as u8),
-            Binaryop::Eq => self.emit(OpCode::Eq as u8),
-            Binaryop::NotEq => {
+            BinaryOp::Add => self.emit_opcode(OpCode::Add),
+            BinaryOp::Sub => self.emit_opcode(OpCode::Sub),
+            BinaryOp::Mult => self.emit_opcode(OpCode::Mult),
+            BinaryOp::Div => self.emit_opcode(OpCode::Div),
+            BinaryOp::Eq => self.emit_opcode(OpCode::Eq),
+            BinaryOp::NotEq => {
                 self.emit(OpCode::Eq as u8);
                 self.emit(OpCode::Not as u8);
             }
-            Binaryop::Gt => self.emit(OpCode::Gt as u8),
-            Binaryop::GtE => todo!(),
-            Binaryop::Lt => self.emit(OpCode::Lt as u8),
-            Binaryop::LtE => todo!(),
-            Binaryop::And => todo!(),
-            Binaryop::Or => todo!(),
+            BinaryOp::Gt => self.emit_opcode(OpCode::Gt),
+            BinaryOp::GtE => todo!(),
+            BinaryOp::Lt => self.emit_opcode(OpCode::Lt),
+            BinaryOp::LtE => todo!(),
+            BinaryOp::And => todo!(),
+            BinaryOp::Or => todo!(),
         }
     }
 
     fn compile_literal(&mut self, value: ParseObj) {
         match value {
-            ParseObj::Nil => self.emit(OpCode::Nil as u8),
+            ParseObj::Nil => self.emit_opcode(OpCode::Nil),
             ParseObj::Bool(b) => self.emit_constant(Value::Bool(b)),
             ParseObj::Int(v) => self.emit_constant(Value::Int(v as i64)),
             ParseObj::Float(v) => self.emit_constant(Value::Float(v)),
@@ -106,29 +117,29 @@ impl Compiler {
             ParseObj::Ident(name) => {
                 // TODO: add NameError to point name is not defined
                 let i = *self.global.get(&name).unwrap();
-                self.emit(OpCode::GetGlobal as u8);
+                self.emit_opcode(OpCode::GetGlobal);
                 // TODO: long byte(u16) support
                 self.emit(i as u8);
             },
         }
     }
 
-    fn emit_unaryop(&mut self, op: Unaryop) {
+    fn emit_unaryop(&mut self, op: UnaryOp) {
         match op {
-            Unaryop::Not => self.emit(OpCode::Not as u8),
-            Unaryop::Minus => todo!(),
+            UnaryOp::Not => self.emit_opcode(OpCode::Not),
+            UnaryOp::Minus => todo!(),
         }
     }
 
     fn emit_constant(&mut self, value: Value) {
         let index = self.chunk.write_constant(value);
-        self.chunk.write_code(OpCode::Constant as u8);
+        self.emit_opcode(OpCode::Constant);
 
         // TODO: add two byte argument support
         if index > u8::MAX as usize {
             todo!()
         }
-        self.chunk.write_code(index as u8);
+        self.emit(index as u8);
     }
 }
 

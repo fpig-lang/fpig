@@ -7,7 +7,7 @@ pub(crate) struct Cursor<'a> {
     chars: Chars<'a>,
 }
 
-// using array rather than slice may better
+// keyword and built-in value and so on
 const PREDEFINED: &[(&str, TokenKind)] = &[
     ("let", TokenKind::Let),
     ("if", TokenKind::If),
@@ -79,8 +79,7 @@ impl<'a> Cursor<'a> {
         iter.next().unwrap_or(EOF_CHAR)
     }
 
-    // bump a char and not checked
-    // must be called after checked one of first(), second(), is_eof()
+    // bump a char and if already at the end, just return EOF_CHAR
     fn bump(&mut self) -> char {
         self.chars.next().unwrap_or(EOF_CHAR)
     }

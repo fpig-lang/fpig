@@ -1,7 +1,7 @@
 use crate::ast::{ExprKind, ParseObj, Stmt, StmtKind};
 
 use crate::{
-    ast::{Binaryop, Expr, Unaryop},
+    ast::{BinaryOp, Expr, UnaryOp},
     lexer::Cursor,
     token::{Token, TokenKind},
 };
@@ -13,8 +13,6 @@ pub(crate) struct Parser<'a> {
 }
 
 impl Parser<'_> {
-    // TODO: make location really correct not just start at Stmt or Expr
-
     pub(crate) fn new(cursor: Cursor) -> Parser {
         Parser {
             cursor,
@@ -73,7 +71,7 @@ impl Parser<'_> {
             left = Box::new(Expr::new(
                 ExprKind::Binary {
                     left,
-                    op: Binaryop::And,
+                    op: BinaryOp::And,
                     right,
                 },
             ));
@@ -90,7 +88,7 @@ impl Parser<'_> {
             left = Box::new(Expr::new(
                 ExprKind::Binary {
                     left,
-                    op: Binaryop::Or,
+                    op: BinaryOp::Or,
                     right,
                 },
             ));
@@ -105,8 +103,8 @@ impl Parser<'_> {
         use TokenKind::*;
         while self.check(&[EqEq, BangEq]) {
             let op = match self.now.kind() {
-                EqEq => Binaryop::Eq,
-                BangEq => Binaryop::NotEq,
+                EqEq => BinaryOp::Eq,
+                BangEq => BinaryOp::NotEq,
                 _ => todo!(),
             };
             let right = self.expr_comparison();
@@ -122,10 +120,10 @@ impl Parser<'_> {
         use TokenKind::*;
         while self.check(&[Gt, GtE, Lt, LtE]) {
             let op = match self.now.kind() {
-                Gt => Binaryop::Gt,
-                GtE => Binaryop::GtE,
-                Lt => Binaryop::Lt,
-                LtE => Binaryop::LtE,
+                Gt => BinaryOp::Gt,
+                GtE => BinaryOp::GtE,
+                Lt => BinaryOp::Lt,
+                LtE => BinaryOp::LtE,
                 _ => todo!(),
             };
             let right = self.term();
@@ -141,8 +139,8 @@ impl Parser<'_> {
         use TokenKind::*;
         while self.check(&[Plus, Minus]) {
             let op = match self.now.kind() {
-                Plus => Binaryop::Add,
-                Minus => Binaryop::Sub,
+                Plus => BinaryOp::Add,
+                Minus => BinaryOp::Sub,
                 _ => todo!(),
             };
             let right = self.factor();
@@ -158,8 +156,8 @@ impl Parser<'_> {
         use TokenKind::*;
         while self.check(&[Star, Slash]) {
             let op = match self.now.kind() {
-                Star => Binaryop::Mult,
-                Slash => Binaryop::Div,
+                Star => BinaryOp::Mult,
+                Slash => BinaryOp::Div,
                 _ => todo!(),
             };
             let right = self.unary();
@@ -173,8 +171,8 @@ impl Parser<'_> {
         use TokenKind::*;
         if self.check(&[Bang, Minus]) {
             let op = match self.now.kind() {
-                Bang => Unaryop::Not,
-                Minus => Unaryop::Minus,
+                Bang => UnaryOp::Not,
+                Minus => UnaryOp::Minus,
                 _ => todo!(),
             };
             let operand = self.unary();
@@ -226,7 +224,7 @@ impl Parser<'_> {
             OpenParen => {
                 self.eat();
                 let expr_inner = self.expression();
-                if !self.check(&[OpenParen]) {
+                if !self.check(&[CloseParen]) {
                     todo!()
                 }
                 // already eat

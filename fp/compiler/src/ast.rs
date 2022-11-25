@@ -23,6 +23,7 @@ impl<T> Located<T> {
 }
 
 pub(crate) type Stmt = Located<StmtKind>;
+pub(crate) type Expr = Located<ExprKind>;
 
 #[derive(Debug)]
 pub(crate) enum StmtKind {
@@ -35,8 +36,6 @@ pub(crate) enum StmtKind {
     },
 }
 
-pub(crate) type Expr = Located<ExprKind>;
-
 #[derive(Debug)]
 pub(crate) enum ExprKind {
     Literal {
@@ -46,24 +45,24 @@ pub(crate) enum ExprKind {
         body: Box<Expr>,
     },
     Unary {
-        op: Unaryop,
+        op: UnaryOp,
         operand: Box<Expr>,
     },
     Binary {
         left: Box<Expr>,
-        op: Binaryop,
+        op: BinaryOp,
         right: Box<Expr>,
     },
 }
 
 #[derive(Debug)]
-pub(crate) enum Unaryop {
+pub(crate) enum UnaryOp {
     Not,
     Minus,
 }
 
 #[derive(Debug)]
-pub(crate) enum Binaryop {
+pub(crate) enum BinaryOp {
     Add,
     Sub,
     Mult,
