@@ -37,98 +37,100 @@ impl Vm {
             let byte = self.read_byte().ok_or(())?;
 
             match byte {
-                0x00 => {
+                0x00 => { // Add
                     let b = self.get_val()?;
                     let a = self.get_val()?;
                     let result = (a + b)?;
                     self.stack.push(result);
                 }
-                0x01 => {
+                0x01 => { // Sub
                     let b = self.get_val()?;
                     let a = self.get_val()?;
                     let result = (a - b)?;
                     self.stack.push(result);
                 }
-                0x02 => {
+                0x02 => { // Neg
                     let value = self.get_val()?;
                     // self.stack.push(-value);
                 }
-                0x03 => {
+                0x03 => { // Mult
                     let b = self.get_val()?;
                     let a = self.get_val()?;
                     let result = (a * b)?;
                     self.stack.push(result);
                 }
-                0x04 => {
+                0x04 => { // Div
                     let b = self.get_val()?;
                     let a = self.get_val()?;
                     let result = (a / b)?;
                     self.stack.push(result);
                 }
-                0x05 => self.stack.push(Value::Bool(true)),
-                0x06 => self.stack.push(Value::Bool(false)),
-                0x07 => self.stack.push(Value::Nil),
-                0x08 => todo!(),
-                0x09 => {
+                0x05 => self.stack.push(Value::Bool(true)), // True
+                0x06 => self.stack.push(Value::Bool(false)), // False
+                0x07 => self.stack.push(Value::Nil), // Nil
+                0x08 => todo!(), // Not
+                0x09 => { // Eq
                     let b = self.get_val()?;
                     let a = self.get_val()?;
                     let result = a == b;
                     self.stack.push(Value::Bool(result));
                 }
-                0x0A => {
+                0x0A => { // Gt
                     let b = self.get_val()?;
                     let a = self.get_val()?;
                     let result = a > b;
                     self.stack.push(Value::Bool(result));
                 }
-                0x0B => {
+                0x0B => { // Lt
                     let b = self.get_val()?;
                     let a = self.get_val()?;
                     let result = a < b;
                     self.stack.push(Value::Bool(result));
                 }
-                0x0C => {
+                0x0C => { // Return
                     #[cfg(feature = "vm_dev")]
                     {
-                        println!("{:?}", self.stack);
-                        println!("{:?}", self.global);
+                        println!("Returned");
+                        println!("stack: {:?}", self.stack);
+                        println!("global: {:?}", self.global);
+                        println!();
                     }
 
                     return Ok(());
                 }
-                0x0D => {
+                0x0D => { // Constant
                     let constant = self.read_byte().ok_or(())?;
                     let value = self.chunk.get_constant(constant as usize).ok_or(())?;
                     self.stack.push(value.clone());
                 }
-                0x0E => {
+                0x0E => { // ConstantLong
                     let constant = self.read_long_byte().ok_or(())?;
                     let value = self.chunk.get_constant(constant as usize).ok_or(())?;
                     self.stack.push(value.clone())
                 }
-                0x0F => {
+                0x0F => { // Pop
                     let a = self.stack.pop().unwrap_or(Value::Nil);
 
                     #[cfg(feature = "vm_dev")]
-                    println!("{:?}", a);
+                    println!("Pop value: {:?}\n", a);
                 }
-                0x10 => {
+                0x10 => { // DefineGlobal
                     let i = self.read_byte().ok_or(())? as u16;
                     let value = self.stack.pop().ok_or(())?;
                     self.global.insert(i, value);
 
                     #[cfg(feature = "vm_dev")]
-                    println!("{:?}", self.global)
+                    println!("Define Global: {:?}\n", self.global)
                 }
-                0x11 => {
+                0x11 => { // DefineGlobalLong
                     todo!()
                 }
-                0x12 => {
+                0x12 => { // GetGlobal
                     let i = self.read_byte().ok_or(())?;
                     let value = self.global.get(&(i as u16)).ok_or(())?;
                     self.stack.push(value.clone());
                 }
-                0x13 => todo!(),
+                0x13 => todo!(), // GetGlobalLong
                 _ => return Err(()),
             }
         }
