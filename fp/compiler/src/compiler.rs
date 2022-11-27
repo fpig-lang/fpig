@@ -2,11 +2,12 @@ use std::collections::HashMap;
 
 use vm::{chunk::Chunk, op::OpCode, value::Value};
 
-use crate::ast::{BinaryOp, Expr, ExprKind, ParseObj, UnaryOp, Stmt, StmtKind};
+use crate::ast::{BinaryOp, Expr, ExprKind, ParseObj, Stmt, StmtKind, UnaryOp};
 
 pub(crate) struct Compiler {
     chunk: Chunk,
     global: HashMap<String, u16>,
+    compiling_var_dec: bool,
 }
 
 impl Compiler {
@@ -14,6 +15,7 @@ impl Compiler {
         Compiler {
             chunk: Chunk::new(),
             global: HashMap::new(),
+            compiling_var_dec: false,
         }
     }
 
@@ -37,19 +39,20 @@ impl Compiler {
             StmtKind::ExprStmt { expr } => {
                 self.compile_expr(*expr);
                 self.emit_opcode(OpCode::Pop)
-            },
+            }
             StmtKind::VarDec { name, value } => self.compile_var_dec(name, *value),
         }
     }
 
     fn compile_var_dec(&mut self, name: String, value: Expr) {
+        self.compiling_var_dec = true;
         self.compile_expr(value);
         // TODO: ensure len of global low than u16::MAX
         let i = self.global.len() as u16;
         self.global.insert(name, i);
 
         if i > u8::MAX as u16 {
-            self.emit_opcode(OpCode::DefineGlobalLong );
+            self.emit_opcode(OpCode::DefineGlobalLong);
             // TODO: split u16 to 2 u8
 
             return;
@@ -57,6 +60,7 @@ impl Compiler {
 
         self.emit(OpCode::DefineGlobal as u8);
         self.emit(i as u8);
+        self.compiling_var_dec = false;
     }
 
     fn compile_expr(&mut self, expr: Expr) {
@@ -75,6 +79,27 @@ impl Compiler {
             ExprKind::Unary { op, operand } => {
                 self.compile_expr(*operand);
                 self.emit_unaryop(op);
+            }
+            ExprKind::Block { inner } => {
+                if inner.is_empty() {
+                    self.emit_opcode(OpCode::Nil);
+                    return;
+                }
+                let mut inner = inner;
+                // the inner isn't empty
+                let end = inner.pop().unwrap();
+
+                for stmt in inner {
+                    self.compile_stmt(stmt);
+                }
+
+                if self.compiling_var_dec {
+                    if let StmtKind::ExprStmt { expr } = end.node {
+                        self.compile_expr(*expr);
+                        return;
+                    }
+                }
+                self.compile_stmt(end);
             }
         }
     }
@@ -120,7 +145,7 @@ impl Compiler {
                 self.emit_opcode(OpCode::GetGlobal);
                 // TODO: long byte(u16) support
                 self.emit(i as u8);
-            },
+            }
         }
     }
 
@@ -142,4 +167,3 @@ impl Compiler {
         self.emit(index as u8);
     }
 }
-

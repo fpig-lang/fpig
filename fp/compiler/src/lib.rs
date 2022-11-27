@@ -1,9 +1,9 @@
 mod ast;
 mod compiler;
 mod lexer;
+mod location;
 mod parser;
 mod token;
-mod location;
 
 use lexer::Cursor;
 use parser::Parser;
@@ -15,7 +15,9 @@ pub struct Compiler {
 
 impl Compiler {
     pub fn new() -> Compiler {
-        Compiler { compiler: compiler::Compiler::new() }
+        Compiler {
+            compiler: compiler::Compiler::new(),
+        }
     }
 
     pub fn compile(&mut self, raw_code: &str) -> Chunk {

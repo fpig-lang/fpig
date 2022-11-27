@@ -38,7 +38,9 @@ impl Parser<'_> {
 
     fn statement(&mut self) -> Box<Stmt> {
         match self.peek().kind() {
-            _ => Box::new(Stmt::new(StmtKind::ExprStmt { expr: self.expression() })),
+            _ => Box::new(Stmt::new(StmtKind::ExprStmt {
+                expr: self.expression(),
+            })),
         }
     }
 
@@ -47,34 +49,51 @@ impl Parser<'_> {
         match self.peek().kind().clone() {
             TokenKind::Ident { name } => {
                 self.eat();
-                if self.check(&[TokenKind::Eq]) {
+                if self.check_eat(&[TokenKind::Eq]) {
                     let expr = self.expression();
-                    return Box::new(Stmt::new(StmtKind::VarDec { name, value: expr }))
+                    return Box::new(Stmt::new(StmtKind::VarDec { name, value: expr }));
                 }
 
-                let expr = Box::new(Expr::new(ExprKind::Literal { value: ParseObj::Nil }));
+                let expr = Box::new(Expr::new(ExprKind::Literal {
+                    value: ParseObj::Nil,
+                }));
                 Box::new(Stmt::new(StmtKind::VarDec { name, value: expr }))
-            },
-            _ => todo!()
+            }
+            _ => todo!(),
         }
     }
 
     fn expression(&mut self) -> Box<Expr> {
-        self.expr_and()
+        match self.peek().kind().clone() {
+            TokenKind::OpenBrace => {
+                self.eat();
+                let mut inner = Vec::new();
+                while !self.check(&[TokenKind::CloseBrace, TokenKind::Eof]) {
+                    inner.push(*self.declaration());
+                }
+
+                if !self.check_eat(&[TokenKind::CloseBrace]) {
+                    todo!()
+                }
+
+                // already eated }
+
+                Box::new(Expr::new(ExprKind::Block { inner }))
+            }
+            _ => self.expr_and(),
+        }
     }
 
     fn expr_and(&mut self) -> Box<Expr> {
         let mut left = self.expr_or();
 
-        while self.check(&[TokenKind::And]) {
+        while self.check_eat(&[TokenKind::And]) {
             let right = self.expr_or();
-            left = Box::new(Expr::new(
-                ExprKind::Binary {
-                    left,
-                    op: BinaryOp::And,
-                    right,
-                },
-            ));
+            left = Box::new(Expr::new(ExprKind::Binary {
+                left,
+                op: BinaryOp::And,
+                right,
+            }));
         }
 
         left
@@ -83,15 +102,13 @@ impl Parser<'_> {
     fn expr_or(&mut self) -> Box<Expr> {
         let mut left = self.expr_equal();
 
-        while self.check(&[TokenKind::Or]) {
+        while self.check_eat(&[TokenKind::Or]) {
             let right = self.expr_equal();
-            left = Box::new(Expr::new(
-                ExprKind::Binary {
-                    left,
-                    op: BinaryOp::Or,
-                    right,
-                },
-            ));
+            left = Box::new(Expr::new(ExprKind::Binary {
+                left,
+                op: BinaryOp::Or,
+                right,
+            }));
         }
 
         left
@@ -101,7 +118,7 @@ impl Parser<'_> {
         let mut left = self.expr_comparison();
 
         use TokenKind::*;
-        while self.check(&[EqEq, BangEq]) {
+        while self.check_eat(&[EqEq, BangEq]) {
             let op = match self.now.kind() {
                 EqEq => BinaryOp::Eq,
                 BangEq => BinaryOp::NotEq,
@@ -118,7 +135,7 @@ impl Parser<'_> {
         let mut left = self.term();
 
         use TokenKind::*;
-        while self.check(&[Gt, GtE, Lt, LtE]) {
+        while self.check_eat(&[Gt, GtE, Lt, LtE]) {
             let op = match self.now.kind() {
                 Gt => BinaryOp::Gt,
                 GtE => BinaryOp::GtE,
@@ -137,7 +154,7 @@ impl Parser<'_> {
         let mut left = self.factor();
 
         use TokenKind::*;
-        while self.check(&[Plus, Minus]) {
+        while self.check_eat(&[Plus, Minus]) {
             let op = match self.now.kind() {
                 Plus => BinaryOp::Add,
                 Minus => BinaryOp::Sub,
@@ -154,7 +171,7 @@ impl Parser<'_> {
         let mut left = self.unary();
 
         use TokenKind::*;
-        while self.check(&[Star, Slash]) {
+        while self.check_eat(&[Star, Slash]) {
             let op = match self.now.kind() {
                 Star => BinaryOp::Mult,
                 Slash => BinaryOp::Div,
@@ -169,7 +186,7 @@ impl Parser<'_> {
 
     fn unary(&mut self) -> Box<Expr> {
         use TokenKind::*;
-        if self.check(&[Bang, Minus]) {
+        if self.check_eat(&[Bang, Minus]) {
             let op = match self.now.kind() {
                 Bang => UnaryOp::Not,
                 Minus => UnaryOp::Minus,
@@ -186,48 +203,34 @@ impl Parser<'_> {
         use TokenKind::*;
 
         let expr = match self.peek().kind() {
-            True => Box::new(Expr::new(
-                ExprKind::Literal {
-                    value: ParseObj::Bool(true),
-                },
-            )),
-            False => Box::new(Expr::new(
-                ExprKind::Literal {
-                    value: ParseObj::Bool(false),
-                },
-            )),
-            Nil => Box::new(Expr::new(
-                ExprKind::Literal {
-                    value: ParseObj::Nil,
-                },
-            )),
-            Int { value } => Box::new(Expr::new(
-                ExprKind::Literal {
-                    value: ParseObj::Int(*value),
-                },
-            )),
-            Float { value } => Box::new(Expr::new(
-                ExprKind::Literal {
-                    value: ParseObj::Float(*value),
-                },
-            )),
-            Str { value } => Box::new(Expr::new(
-                ExprKind::Literal {
-                    value: ParseObj::Str(value.clone()),
-                },
-            )),
-            Ident { name } => Box::new(Expr::new(
-                ExprKind::Literal {
-                    value: ParseObj::Ident(name.clone()),
-                },
-            )),
+            True => Box::new(Expr::new(ExprKind::Literal {
+                value: ParseObj::Bool(true),
+            })),
+            False => Box::new(Expr::new(ExprKind::Literal {
+                value: ParseObj::Bool(false),
+            })),
+            Nil => Box::new(Expr::new(ExprKind::Literal {
+                value: ParseObj::Nil,
+            })),
+            Int { value } => Box::new(Expr::new(ExprKind::Literal {
+                value: ParseObj::Int(*value),
+            })),
+            Float { value } => Box::new(Expr::new(ExprKind::Literal {
+                value: ParseObj::Float(*value),
+            })),
+            Str { value } => Box::new(Expr::new(ExprKind::Literal {
+                value: ParseObj::Str(value.clone()),
+            })),
+            Ident { name } => Box::new(Expr::new(ExprKind::Literal {
+                value: ParseObj::Ident(name.clone()),
+            })),
             OpenParen => {
                 self.eat();
                 let expr_inner = self.expression();
-                if !self.check(&[CloseParen]) {
+                if !self.check_eat(&[CloseParen]) {
                     todo!()
                 }
-                // already eat
+                // already eated )
                 return Box::new(Expr::new(ExprKind::Group { body: expr_inner }));
             }
             _ => todo!(),
@@ -242,10 +245,17 @@ impl Parser<'_> {
         self.now = std::mem::replace(&mut self.next, next);
     }
 
-    fn check(&mut self, kinds: &[TokenKind]) -> bool {
+    fn check_eat(&mut self, kinds: &[TokenKind]) -> bool {
+        if self.check(kinds) {
+            self.eat();
+            return true;
+        }
+        false
+    }
+
+    fn check(&self, kinds: &[TokenKind]) -> bool {
         for kind in kinds {
             if self.peek().kind() == kind {
-                self.eat();
                 return true;
             }
         }

@@ -162,8 +162,13 @@ impl Cursor<'_> {
             // number
             c @ '0'..='9' => self.number(c),
 
+            EOF_CHAR => TokenKind::Eof,
+
             _ => TokenKind::Error,
         };
+        #[cfg(feature = "compiler_dev")]
+        println!("bump token: {}", token_kind);
+
         Token::new(token_kind)
     }
 

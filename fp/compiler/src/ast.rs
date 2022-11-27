@@ -27,13 +27,8 @@ pub(crate) type Expr = Located<ExprKind>;
 
 #[derive(Debug)]
 pub(crate) enum StmtKind {
-    ExprStmt {
-        expr: Box<Expr>,
-    },
-    VarDec {
-        name: String,
-        value: Box<Expr>,
-    },
+    ExprStmt { expr: Box<Expr> },
+    VarDec { name: String, value: Box<Expr> },
 }
 
 #[derive(Debug)]
@@ -52,6 +47,9 @@ pub(crate) enum ExprKind {
         left: Box<Expr>,
         op: BinaryOp,
         right: Box<Expr>,
+    },
+    Block {
+        inner: Vec<Stmt>,
     },
 }
 
