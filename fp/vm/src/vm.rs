@@ -146,6 +146,20 @@ impl Vm {
                     self.stack.push(value.clone());
                 }
                 0x13 => todo!(), // GetGlobalLong
+                0x14 => { // BlockEnd
+                    let n = self.read_byte().ok_or(())?;
+                    let value = self.stack.pop().unwrap();
+                    let final_n = self.stack.len() - n as usize;
+                    self.stack.truncate(final_n);
+                    self.stack.push(value);
+                },
+                0x15 => todo!(), // SetLocal
+                0x16 => todo!(), // SetLocalLong
+                0x17 => { // GetLocal
+                    let i = self.read_byte().ok_or(())?;
+                    self.stack.push(self.stack[i as usize].clone());
+                },
+                0x18 => todo!(),
                 _ => return Err(()),
             }
         }
