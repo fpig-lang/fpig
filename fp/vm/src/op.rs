@@ -19,4 +19,9 @@ pub enum OpCode {
     DefineGlobalLong = 0x11,
     GetGlobal = 0x12,
     GetGlobalLong = 0x13,
+    PopN = 0x14,
+    SetLocal = 0x15,
+    SetLocalLong = 0x16,
+    GetLocal = 0x17,
+    GetLocalLong = 0x18,
 }

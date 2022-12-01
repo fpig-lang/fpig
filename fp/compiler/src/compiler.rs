@@ -7,7 +7,15 @@ use crate::ast::{BinaryOp, Expr, ExprKind, ParseObj, Stmt, StmtKind, UnaryOp};
 pub(crate) struct Compiler {
     chunk: Chunk,
     global: HashMap<String, u16>,
+
+    // for some thing like "let a = { { let a = 1 a } }"
+    // in this case, there is a left-value 'a'. can't drop the value when finish a expr_stmt
     compiling_var_dec: bool,
+
+    // for local variable
+    scope: Vec<HashMap<String, u16>>,
+    scope_depth: usize,
+    stack_top: u16,
 }
 
 impl Compiler {
@@ -16,6 +24,9 @@ impl Compiler {
             chunk: Chunk::new(),
             global: HashMap::new(),
             compiling_var_dec: false,
+            scope: Vec::new(),
+            scope_depth: 0,
+            stack_top: 0,
         }
     }
 
@@ -47,19 +58,26 @@ impl Compiler {
     fn compile_var_dec(&mut self, name: String, value: Expr) {
         self.compiling_var_dec = true;
         self.compile_expr(value);
-        // TODO: ensure len of global low than u16::MAX
-        let i = self.global.len() as u16;
-        self.global.insert(name, i);
 
-        if i > u8::MAX as u16 {
-            self.emit_opcode(OpCode::DefineGlobalLong);
-            // TODO: split u16 to 2 u8
+        if self.scope_depth == 0 {
+            // TODO: ensure len of global low than u16::MAX
+            let i = self.global.len() as u16;
+            self.global.insert(name, i);
 
+            if i > u8::MAX as u16 {
+                self.emit_opcode(OpCode::DefineGlobalLong);
+                // TODO: split u16 to 2 u8
+
+                return;
+            }
+
+            self.emit(OpCode::DefineGlobal as u8);
+            self.emit(i as u8);
             return;
         }
 
-        self.emit(OpCode::DefineGlobal as u8);
-        self.emit(i as u8);
+        // TODO: check the same variable name
+        self.add_local(name);
         self.compiling_var_dec = false;
     }
 
@@ -81,6 +99,7 @@ impl Compiler {
                 self.emit_unaryop(op);
             }
             ExprKind::Block { inner } => {
+                self.begin_scope();
                 if inner.is_empty() {
                     self.emit_opcode(OpCode::Nil);
                     return;
@@ -100,10 +119,66 @@ impl Compiler {
                     }
                 }
                 self.compile_stmt(end);
+                self.end_scope();
             }
         }
     }
 
+    fn compile_literal(&mut self, value: ParseObj) {
+        match value {
+            ParseObj::Nil => self.emit_opcode(OpCode::Nil),
+            ParseObj::Bool(b) => self.emit_constant(Value::Bool(b)),
+            ParseObj::Int(v) => self.emit_constant(Value::Int(v as i64)),
+            ParseObj::Float(v) => self.emit_constant(Value::Float(v)),
+            ParseObj::Str(s) => self.emit_constant(Value::Str(s)),
+            ParseObj::Ident(name) => self.compile_variable(name),
+        }
+    }
+
+    fn compile_variable(&mut self, name: String) {
+        if self.scope_depth == 0 {
+            // TODO: add NameError to point name is not defined
+            let i = *self.global.get(&name).unwrap();
+            // TODO: long byte(u16) support
+            self.emit(i as u8);
+            return;
+        }
+
+        // TODO: check the name is defined or not defined
+        let i = *self.scope[self.scope_depth].get(&name).unwrap();
+        self.emit_opcode(OpCode::GetLocal);
+        // TODO: long byte(u16) support
+        self.emit(i as u8);
+    }
+
+    // scope
+    fn begin_scope(&mut self) {
+        self.scope_depth += 1;
+
+        self.scope.push(HashMap::new());
+    }
+
+    fn end_scope(&mut self) {
+        self.scope_depth -= 1;
+
+        // TODO: check the size of 'count'
+        let count = self.scope.last().unwrap().len() as u8;
+        if count == 0 {
+            return;
+        }
+        self.scope.pop();
+        self.emit_opcode(OpCode::PopN);
+        self.emit(count);
+        self.stack_top -= count as u16;
+    }
+
+    fn add_local(&mut self, name: String) {
+        // TODO: check the stack top overflow
+        self.scope[self.scope_depth].insert(name, self.stack_top);
+        self.stack_top += 1;
+    }
+
+    // emit family
     fn emit(&mut self, code: u8) {
         self.chunk.write_code(code);
     }
@@ -129,23 +204,6 @@ impl Compiler {
             BinaryOp::LtE => todo!(),
             BinaryOp::And => todo!(),
             BinaryOp::Or => todo!(),
-        }
-    }
-
-    fn compile_literal(&mut self, value: ParseObj) {
-        match value {
-            ParseObj::Nil => self.emit_opcode(OpCode::Nil),
-            ParseObj::Bool(b) => self.emit_constant(Value::Bool(b)),
-            ParseObj::Int(v) => self.emit_constant(Value::Int(v as i64)),
-            ParseObj::Float(v) => self.emit_constant(Value::Float(v)),
-            ParseObj::Str(s) => self.emit_constant(Value::Str(s)),
-            ParseObj::Ident(name) => {
-                // TODO: add NameError to point name is not defined
-                let i = *self.global.get(&name).unwrap();
-                self.emit_opcode(OpCode::GetGlobal);
-                // TODO: long byte(u16) support
-                self.emit(i as u8);
-            }
         }
     }
 
