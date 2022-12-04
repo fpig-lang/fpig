@@ -66,7 +66,7 @@ pub(crate) enum TokenKind {
     Return,           // return
 
     // other
-    Error,
+    Error { kind: LexError },
     Eof,
 }
 
@@ -110,8 +110,14 @@ impl fmt::Display for TokenKind {
             Or => write!(f, "or"),
             Fun => write!(f, "fn"),
             Return => write!(f, "return"),
-            Error => write!(f, "error"),
+            Error { kind } => write!(f, "error: {:#?}", kind),
             Eof => write!(f, "eof"),
         }
     }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub(crate) enum LexError {
+    UnknownChar(char),
+    NotClose(char),
 }
