@@ -101,24 +101,31 @@ impl Compiler {
     }
 
     fn compile_if(&mut self, test: Box<Expr>, body: Vec<Stmt>, orelse: Vec<Stmt>) {
-        macro_rules! compile_backfill {
-            ($inner: expr) => {
-                let now = self.chunk.get_code_len();
-                self.compile_block($inner);
-                let end = self.chunk.get_code_len();
-                if end - now > u16::MAX as usize {
-                    todo!()
-                }
-                self.emit_backfill_long(now, (end - now) as u16);
-            };
-        }
+        // TODO: this funcation is really a piece of shit.
         self.compile_expr(*test);
         self.emit_opcode(OpCode::JumpIfFalse);
         self.emit_long_byte(0);
-        compile_backfill!(body);
+        let now = self.chunk.get_code_len();
+        self.compile_block(body);
+        let end = self.chunk.get_code_len();
+        if end - now + 3 > u16::MAX as usize {
+            todo!()
+        }
+        if orelse.is_empty() { // no else
+            self.emit_backfill_long(now, (end - now) as u16);
+            return;
+        }
+        self.emit_backfill_long(now, (end - now) as u16 + 3);
+
         self.emit_opcode(OpCode::Jump);
         self.emit_long_byte(0);
-        compile_backfill!(orelse);
+        let now = self.chunk.get_code_len();
+        self.compile_block(orelse);
+        let end = self.chunk.get_code_len();
+        if end - now + 3 > u16::MAX as usize {
+            todo!()
+        }
+        self.emit_backfill_long(now, (end - now) as u16);
     }
 
     fn compile_block(&mut self, inner: Vec<Stmt>) {

@@ -161,7 +161,25 @@ impl Vm {
                     let i = self.read_byte().ok_or(())?;
                     self.stack.push(self.stack[i as usize].clone());
                 }
-                0x18 => todo!(),
+                0x18 => todo!(), // GetLocalL
+                0x19 => { // Jump
+                    let offset = self.read_long_byte().ok_or(())? as usize;
+                    self.ip += offset;
+                }
+                0x1A => { // JumpIfFalse
+                    let offset = self.read_long_byte().ok_or(())? as usize;
+                    let test = self.stack.pop().unwrap();
+                    if let Value::Bool(b) = test {
+                        if b {
+                            continue;
+                        }
+
+                        self.ip += offset;
+                        continue;
+                    }
+
+                    todo!()
+                }
                 _ => return Err(()),
             }
         }
