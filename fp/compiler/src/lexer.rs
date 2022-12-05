@@ -1,4 +1,4 @@
-use crate::token::{Token, TokenKind, LexError};
+use crate::token::{LexError, Token, TokenKind};
 use std::str::Chars;
 
 pub(crate) const EOF_CHAR: char = '\0';
@@ -165,7 +165,7 @@ impl Cursor<'_> {
             EOF_CHAR => TokenKind::Eof,
 
             c @ _ => TokenKind::Error {
-                kind: LexError::UnknownChar(c)
+                kind: LexError::UnknownChar(c),
             },
         };
         #[cfg(feature = "compiler_dev")]
@@ -212,7 +212,7 @@ impl Cursor<'_> {
         // the " is not close
         if self.first() == EOF_CHAR {
             return TokenKind::Error {
-                kind: LexError::NotClose('"')
+                kind: LexError::NotClose('"'),
             };
         }
 

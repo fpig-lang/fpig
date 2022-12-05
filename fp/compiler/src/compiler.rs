@@ -92,30 +92,58 @@ impl Compiler {
                 self.emit_unaryop(op);
             }
             ExprKind::Block { inner } => {
-                self.begin_scope();
-                if inner.is_empty() {
-                    self.emit_opcode(OpCode::Nil);
-                    return;
-                }
-                let mut inner = inner;
-                // the inner isn't empty
-                let end = inner.pop().unwrap();
-
-                for stmt in inner {
-                    self.compile_stmt(stmt);
-                }
-
-                // make sure the end stmt will produce a value in stack
-                if let StmtKind::ExprStmt { expr } = end.node {
-                    self.compile_expr(*expr);
-                } else {
-                    self.compile_stmt(end);
-                    self.emit_opcode(OpCode::Nil);
-                }
-
-                self.end_scope();
+                self.compile_block(inner);
             }
+            ExprKind::If { test, body, orelse } => {
+                self.compile_if(test, body, orelse);
+            },
         }
+    }
+
+    fn compile_if(&mut self, test: Box<Expr>, body: Vec<Stmt>, orelse: Vec<Stmt>) {
+        macro_rules! compile_backfill {
+            ($inner: expr) => {
+                let now = self.chunk.get_code_len();
+                self.compile_block($inner);
+                let end = self.chunk.get_code_len();
+                if end - now > u16::MAX as usize {
+                    todo!()
+                }
+                self.emit_backfill_long(now, (end - now) as u16);
+            };
+        }
+        self.compile_expr(*test);
+        self.emit_opcode(OpCode::JumpIfFalse);
+        self.emit_long_byte(0);
+        compile_backfill!(body);
+        self.emit_opcode(OpCode::Jump);
+        self.emit_long_byte(0);
+        compile_backfill!(orelse);
+    }
+
+    fn compile_block(&mut self, inner: Vec<Stmt>) {
+        self.begin_scope();
+        if inner.is_empty() {
+            self.emit_opcode(OpCode::Nil);
+            return;
+        }
+        let mut inner = inner;
+        // the inner isn't empty
+        let end = inner.pop().unwrap();
+
+        for stmt in inner {
+            self.compile_stmt(stmt);
+        }
+
+        // make sure the end stmt will produce a value in stack
+        if let StmtKind::ExprStmt { expr } = end.node {
+            self.compile_expr(*expr);
+        } else {
+            self.compile_stmt(end);
+            self.emit_opcode(OpCode::Nil);
+        }
+
+        self.end_scope();
     }
 
     fn compile_literal(&mut self, value: ParseObj) {
@@ -217,5 +245,19 @@ impl Compiler {
             todo!()
         }
         self.emit(index as u8);
+    }
+
+    fn emit_long_byte(&mut self, b: u16) {
+        let bytes = b.to_be_bytes();
+
+        self.emit(bytes[0]);
+        self.emit(bytes[1]);
+    }
+
+    fn emit_backfill_long(&mut self, ip: usize, b: u16) {
+        let bytes = b.to_be_bytes();
+
+        self.chunk.backfill(ip, bytes[0]);
+        self.chunk.backfill(ip + 1, bytes[1]);
     }
 }

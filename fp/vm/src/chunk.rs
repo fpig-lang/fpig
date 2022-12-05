@@ -55,6 +55,14 @@ impl Chunk {
     pub fn write_location(&mut self, l: Location) {
         self.locations.push(l)
     }
+
+    pub fn get_code_len(&self) -> usize {
+        self.code.len()
+    }
+
+    pub fn backfill(&mut self, ip: usize, byte: u8) {
+        self.code[ip] = byte;
+    }
 }
 
 impl Default for Chunk {

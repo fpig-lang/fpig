@@ -80,8 +80,47 @@ impl Parser<'_> {
 
                 Box::new(Expr::new(ExprKind::Block { inner }))
             }
+            TokenKind::If => {
+                self.eat(); // eat the Token If
+                self.if_expr()
+            }
             _ => self.expr_and(),
         }
+    }
+
+    fn if_expr(&mut self) -> Box<Expr> {
+        let test = self.expression();
+
+        if !self.check_eat(&[TokenKind::OpenBrace]) {
+            todo!()
+        }
+
+        let mut body = Vec::new();
+        while !self.check(&[TokenKind::CloseBrace, TokenKind::Eof]) {
+            body.push(*self.declaration())
+        }
+
+        if !self.check_eat(&[TokenKind::CloseBrace]) {
+            todo!()
+        }
+
+        let mut orelse = Vec::new();
+
+        // else
+        if !self.check_eat(&[TokenKind::Else]) {
+            return Box::new(Expr::new(ExprKind::If { test, body, orelse }));
+        }
+        if !self.check_eat(&[TokenKind::OpenBrace]) {
+            todo!()
+        }
+        while !self.check(&[TokenKind::CloseBrace, TokenKind::Eof]) {
+            orelse.push(*self.declaration());
+        }
+        if !self.check_eat(&[TokenKind::CloseBrace]) {
+            todo!()
+        }
+
+        Box::new(Expr::new(ExprKind::If { test, body, orelse }))
     }
 
     fn expr_and(&mut self) -> Box<Expr> {
@@ -225,6 +264,7 @@ impl Parser<'_> {
                 value: ParseObj::Ident(name.clone()),
             })),
             OpenParen => {
+                // TODO: support empty () expr
                 self.eat();
                 let expr_inner = self.expression();
                 if !self.check_eat(&[CloseParen]) {

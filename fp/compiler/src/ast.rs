@@ -51,6 +51,11 @@ pub(crate) enum ExprKind {
     Block {
         inner: Vec<Stmt>,
     },
+    If {
+        test: Box<Expr>,
+        body: Vec<Stmt>,
+        orelse: Vec<Stmt>,
+    },
 }
 
 #[derive(Debug)]
