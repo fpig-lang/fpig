@@ -112,10 +112,10 @@ impl Compiler {
             todo!()
         }
         if orelse.is_empty() { // no else
-            self.emit_backfill_long(now, (end - now) as u16);
+            self.emit_backfill_long(now - 2, (end - now) as u16);
             return;
         }
-        self.emit_backfill_long(now, (end - now) as u16 + 3);
+        self.emit_backfill_long(now - 2, (end - now) as u16 + 3);
 
         self.emit_opcode(OpCode::Jump);
         self.emit_long_byte(0);
@@ -125,7 +125,7 @@ impl Compiler {
         if end - now + 3 > u16::MAX as usize {
             todo!()
         }
-        self.emit_backfill_long(now, (end - now) as u16);
+        self.emit_backfill_long(now - 2, (end - now) as u16);
     }
 
     fn compile_block(&mut self, inner: Vec<Stmt>) {
