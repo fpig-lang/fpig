@@ -45,6 +45,8 @@ pub(crate) enum TokenKind {
     Eq, EqEq,     // = ==
     Gt, GtE,      // > >=
     Lt, LtE,      // < <=
+    /*BitAnd,*/And, // & &&
+    /*BitOr,*/Or,   // | ||
 
     // ident
     Ident { name: String },
@@ -61,7 +63,6 @@ pub(crate) enum TokenKind {
     Let,              // let
     If, Else,         // if else
     For, While,       // for while
-    And, Or,          // and or
     Fun,              // fn
     Return,           // return
 
@@ -110,7 +111,7 @@ impl fmt::Display for TokenKind {
             Or => write!(f, "or"),
             Fun => write!(f, "fn"),
             Return => write!(f, "return"),
-            Error { kind } => write!(f, "error: {:#?}", kind),
+            Error { kind } => write!(f, "error: {:#?}", kind), // TODO: make error info better.
             Eof => write!(f, "eof"),
         }
     }

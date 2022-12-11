@@ -29,6 +29,7 @@ pub(crate) type Expr = Located<ExprKind>;
 pub(crate) enum StmtKind {
     ExprStmt { expr: Box<Expr> },
     VarDec { name: String, value: Box<Expr> },
+    While { test: Box<Expr>, body: Vec<Stmt> },
 }
 
 #[derive(Debug)]
@@ -61,7 +62,7 @@ pub(crate) enum ExprKind {
 #[derive(Debug)]
 pub(crate) enum UnaryOp {
     Not,
-    Minus,
+    Neg,
 }
 
 #[derive(Debug)]

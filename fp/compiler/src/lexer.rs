@@ -100,8 +100,7 @@ impl<'a> Cursor<'a> {
 
 // real lexer
 impl Cursor<'_> {
-    // not check the EOF. checking EOF will make this function return Option<Token>
-    // or add an EOF in TokenKind. just check EOF before call this function.
+    // not checked the EOF
     pub(crate) fn advance_token(&mut self) -> Token {
         // space in this language have no meaning, just skip it.
         self.skip_space();
@@ -205,12 +204,12 @@ impl Cursor<'_> {
     // normal string
     fn string(&mut self) -> TokenKind {
         let mut lexeme = String::with_capacity(8);
-        while !matches!(self.first(), EOF_CHAR | '"') {
+        while !matches!(self.first(), EOF_CHAR | '"' | '\n') {
             lexeme.push(self.bump());
         }
 
         // the " is not close
-        if self.first() == EOF_CHAR {
+        if matches!(self.first(), EOF_CHAR | '\n'){
             return TokenKind::Error {
                 kind: LexError::NotClose('"'),
             };

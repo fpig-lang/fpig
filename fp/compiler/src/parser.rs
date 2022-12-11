@@ -26,6 +26,7 @@ impl Parser<'_> {
         self.declaration()
     }
 
+    // variable declaration, function declaration...
     fn declaration(&mut self) -> Box<Stmt> {
         match self.peek().kind() {
             TokenKind::Let => {
@@ -33,14 +34,6 @@ impl Parser<'_> {
                 self.var_declaration()
             }
             _ => self.statement(),
-        }
-    }
-
-    fn statement(&mut self) -> Box<Stmt> {
-        match self.peek().kind() {
-            _ => Box::new(Stmt::new(StmtKind::ExprStmt {
-                expr: self.expression(),
-            })),
         }
     }
 
@@ -63,62 +56,68 @@ impl Parser<'_> {
         }
     }
 
+    fn statement(&mut self) -> Box<Stmt> {
+        match self.peek().kind() {
+            TokenKind::While => {
+                self.eat(); // eat the while
+                self.while_stmt()
+            }
+            _ => Box::new(Stmt::new(StmtKind::ExprStmt {
+                expr: self.expression(),
+            })),
+        }
+    }
+
+    fn while_stmt(&mut self) -> Box<Stmt> {
+        let test = self.expression();
+        let body = self.block_body();
+        Box::new(Stmt::new(StmtKind::While { test, body }))
+    }
+
     fn expression(&mut self) -> Box<Expr> {
         match self.peek().kind().clone() {
             TokenKind::OpenBrace => {
-                self.eat();
-                let mut inner = Vec::new();
-                while !self.check(&[TokenKind::CloseBrace, TokenKind::Eof]) {
-                    inner.push(*self.declaration());
-                }
-
-                if !self.check_eat(&[TokenKind::CloseBrace]) {
-                    todo!()
-                }
-
-                // already eated }
-
+                self.eat(); // eat the {
+                let inner = self.block_body();
                 Box::new(Expr::new(ExprKind::Block { inner }))
             }
             TokenKind::If => {
-                self.eat(); // eat the Token If
+                self.eat(); // eat the if
                 self.if_expr()
             }
             _ => self.expr_and(),
         }
     }
 
-    fn if_expr(&mut self) -> Box<Expr> {
-        let test = self.expression();
-
-        if !self.check_eat(&[TokenKind::OpenBrace]) {
-            todo!()
-        }
-
-        let mut body = Vec::new();
+    fn block_body(&mut self) -> Vec<Stmt> {
+        let mut inner = Vec::new();
         while !self.check(&[TokenKind::CloseBrace, TokenKind::Eof]) {
-            body.push(*self.declaration())
+            inner.push(*self.declaration());
         }
 
         if !self.check_eat(&[TokenKind::CloseBrace]) {
             todo!()
         }
 
-        let mut orelse = Vec::new();
+        inner
+    }
+
+    fn if_expr(&mut self) -> Box<Expr> {
+        let test = self.expression();
+        if !self.check_eat(&[TokenKind::OpenBrace]) {
+            todo!()
+        }
+        let body = self.block_body();
 
         // else
         if !self.check_eat(&[TokenKind::Else]) {
+            let orelse = Vec::new();
             return Box::new(Expr::new(ExprKind::If { test, body, orelse }));
         }
         if !self.check_eat(&[TokenKind::OpenBrace]) {
             todo!()
         }
-        while !self.check(&[TokenKind::CloseBrace, TokenKind::Eof]) {
-            orelse.push(*self.declaration());
-        }
-        if !self.check_eat(&[TokenKind::CloseBrace]) {
-            todo!()
-        }
+        let orelse = self.block_body();
 
         Box::new(Expr::new(ExprKind::If { test, body, orelse }))
     }
@@ -228,7 +227,7 @@ impl Parser<'_> {
         if self.check_eat(&[Bang, Minus]) {
             let op = match self.now.kind() {
                 Bang => UnaryOp::Not,
-                Minus => UnaryOp::Minus,
+                Minus => UnaryOp::Neg,
                 _ => todo!(),
             };
             let operand = self.unary();
