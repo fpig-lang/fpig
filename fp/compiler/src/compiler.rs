@@ -45,7 +45,7 @@ impl Compiler {
                 self.emit_opcode(OpCode::Pop)
             }
             StmtKind::VarDec { name, value } => self.compile_var_dec(name, *value),
-            StmtKind::While { test, body } => self.compile_while(test, body),
+            StmtKind::While { test, body } => self.compile_while(*test, body),
         }
     }
 
@@ -75,8 +75,29 @@ impl Compiler {
         self.add_local(name);
     }
 
-    fn compile_while(&mut self, test: Box<Expr>, body: Vec<Stmt>) {
-        todo!()
+    // it will generate:
+    // { other }
+    // { test } <------+   <- an expr
+    // +-- JumpIfFalse |   <- will pop and check the value in the top of stack
+    // |   { body }    |   <- stmt, will not return a value
+    // |   JumpBack ---+
+    // +-> { other }
+    fn compile_while(&mut self, test: Expr, body: Vec<Stmt>) {
+        self.compile_expr(test);
+        self.emit_opcode(OpCode::JumpIfFalse);
+        self.emit_long_byte(0);
+        let now = self.chunk.get_code_len();
+        self.compile_block(body, false);
+        let end = self.chunk.get_code_len();
+        let len = end - now + 3;
+        if len > u16::MAX as usize {
+            todo!()
+        }
+        let len = len as u16;
+        self.emit_opcode(OpCode::JumpBack);
+        self.emit_long_byte(len);
+        self.emit_backfill_long(now - 2, len);
+        self.end_scope();
     }
 
     fn compile_expr(&mut self, expr: Expr) {
@@ -97,10 +118,10 @@ impl Compiler {
                 self.emit_unary_op(op);
             }
             ExprKind::Block { inner } => {
-                self.compile_block(inner);
+                self.compile_block(inner, true);
             }
             ExprKind::If { test, body, orelse } => {
-                self.compile_if(test, body, orelse);
+                self.compile_if(*test, body, orelse);
             }
         }
     }
@@ -115,13 +136,13 @@ impl Compiler {
     //      { other } <-+
     // the 'if' should be treated as an expr, that means `let a = if false { 1 } else { 2 }` is fine.
     // when there isn't a left value, 'if' will be treated as a ExprStmt, it will drop the value.
-    fn compile_if(&mut self, test: Box<Expr>, body: Vec<Stmt>, orelse: Vec<Stmt>) {
+    fn compile_if(&mut self, test: Expr, body: Vec<Stmt>, orelse: Vec<Stmt>) {
         // TODO: this funcation is really a piece of shit.
-        self.compile_expr(*test);
+        self.compile_expr(test);
         self.emit_opcode(OpCode::JumpIfFalse);
         self.emit_long_byte(0);
         let now = self.chunk.get_code_len();
-        self.compile_block(body);
+        self.compile_block(body, true);
         let end = self.chunk.get_code_len();
         if end - now + 3 > u16::MAX as usize {
             todo!()
@@ -136,7 +157,7 @@ impl Compiler {
         self.emit_opcode(OpCode::Jump);
         self.emit_long_byte(0);
         let now = self.chunk.get_code_len();
-        self.compile_block(orelse);
+        self.compile_block(orelse, true);
         let end = self.chunk.get_code_len();
         if end - now + 3 > u16::MAX as usize {
             todo!()
@@ -154,7 +175,7 @@ impl Compiler {
     //    N               <- determine how many local variable should be shift.
     // block is an expr, it always return a value.
     // when there isn't a left value, the block will be treated as a ExprStmt and drop the return value.
-    fn compile_block(&mut self, inner: Vec<Stmt>) {
+    fn compile_block(&mut self, inner: Vec<Stmt>, expr: bool) {
         self.begin_scope();
         if inner.is_empty() {
             self.emit_opcode(OpCode::Nil);
@@ -168,12 +189,15 @@ impl Compiler {
             self.compile_stmt(stmt);
         }
 
-        // make sure the end stmt will produce a value in stack
-        if let StmtKind::ExprStmt { expr } = end.node {
-            self.compile_expr(*expr);
+        if expr {
+            if let StmtKind::ExprStmt { expr } = end.node {
+                self.compile_expr(*expr);
+            } else {
+                self.compile_stmt(end);
+                self.emit_opcode(OpCode::Nil);
+            }
         } else {
             self.compile_stmt(end);
-            self.emit_opcode(OpCode::Nil);
         }
 
         self.end_scope();

@@ -163,7 +163,7 @@ impl Cursor<'_> {
 
             EOF_CHAR => TokenKind::Eof,
 
-            c @ _ => TokenKind::Error {
+            c => TokenKind::Error {
                 kind: LexError::UnknownChar(c),
             },
         };
@@ -209,7 +209,7 @@ impl Cursor<'_> {
         }
 
         // the " is not close
-        if matches!(self.first(), EOF_CHAR | '\n'){
+        if matches!(self.first(), EOF_CHAR | '\n') {
             return TokenKind::Error {
                 kind: LexError::NotClose('"'),
             };

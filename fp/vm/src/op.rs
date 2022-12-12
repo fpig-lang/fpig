@@ -28,4 +28,5 @@ pub enum OpCode {
     GetLocalL    = 0x18,
     Jump         = 0x19,
     JumpIfFalse  = 0x1A,
+    JumpBack     = 0x1B,
 }

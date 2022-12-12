@@ -179,8 +179,12 @@ impl Vm {
                         self.ip += offset;
                         continue;
                     }
-
-                    todo!()
+                }
+                0x1B => {
+                    // JumpBack
+                    let offset = self.read_long_byte().ok_or(())? as usize;
+                    self.ip -= 2;
+                    self.ip -= offset;
                 }
                 _ => return Err(()),
             }
